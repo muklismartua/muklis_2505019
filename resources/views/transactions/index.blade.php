@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.transaction')
 
 @section('title', 'Daftar Transaksi')
 

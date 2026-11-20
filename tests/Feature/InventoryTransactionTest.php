@@ -4,12 +4,20 @@ namespace Tests\Feature;
 
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class InventoryTransactionTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->actingAs(User::factory()->create());
+    }
 
     public function test_transaction_pages_render(): void
     {
