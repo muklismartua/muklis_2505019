@@ -10,3 +10,7 @@ window.Alpine = Alpine;
 Alpine.data('purchaseForm', purchaseForm);
 Alpine.data('saleForm', saleForm);
 Alpine.start();
+
+if (document.querySelector('[data-sales-chart]')) {
+    import('./dashboard-chart').then(({ default: initializeDashboardChart }) => initializeDashboardChart());
+}

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InventoryTransactionController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\MasterData\CategoryController;
 use App\Http\Controllers\MasterData\CustomerController;
 use App\Http\Controllers\MasterData\ProductController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\MasterData\SupplierController;
 use App\Http\Controllers\MasterData\UnitController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
@@ -18,9 +20,9 @@ Route::get('/', function () {
     return view('transactions.landing');
 })->name('home');
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'active', 'verified', 'permission:dashboard.lihat'])->name('dashboard');
+Route::get('/dashboard', DashboardController::class)
+    ->middleware(['auth', 'active', 'verified', 'permission:dashboard.lihat'])
+    ->name('dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::resource('categories', CategoryController::class)
@@ -33,6 +35,19 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->middleware('permission:pelanggan.lihat|pelanggan.kelola');
     Route::resource('products', ProductController::class)
         ->middleware('permission:produk.lihat|produk.kelola');
+
+    Route::get('/reports', [ReportController::class, 'home'])
+        ->middleware('permission:laporan.lihat')
+        ->name('reports.index');
+    Route::get('/reports/{report}/excel', [ReportController::class, 'excel'])
+        ->middleware('permission:laporan.lihat')
+        ->name('reports.excel');
+    Route::get('/reports/{report}/pdf', [ReportController::class, 'pdf'])
+        ->middleware('permission:laporan.lihat')
+        ->name('reports.pdf');
+    Route::get('/reports/{report}', [ReportController::class, 'index'])
+        ->middleware('permission:laporan.lihat')
+        ->name('reports.show');
 
     Route::get('/stock', [StockMovementController::class, 'index'])
         ->middleware('permission:stok.lihat')

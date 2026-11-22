@@ -18,7 +18,7 @@ class AppLayoutTest extends TestCase
         $this->seed(RolePermissionSeeder::class);
     }
 
-    public function test_dashboard_renders_the_shell_and_four_placeholder_cards(): void
+    public function test_dashboard_renders_the_shell_and_four_summary_cards(): void
     {
         $admin = User::factory()->create();
         $admin->assignRole('admin');
@@ -32,7 +32,11 @@ class AppLayoutTest extends TestCase
             ->assertSee('Penjualan')
             ->assertSee('Pengaturan')
             ->assertSee($admin->name)
-            ->assertSee('Keluar');
+            ->assertSee('Keluar')
+            ->assertSee('Total penjualan hari ini')
+            ->assertSee('Grafik penjualan')
+            ->assertSee('5 produk terlaris')
+            ->assertSee('5 transaksi terbaru');
 
         $this->assertSame(4, substr_count($response->getContent(), 'aria-label="Kartu ringkasan'));
     }
@@ -48,7 +52,8 @@ class AppLayoutTest extends TestCase
             ->assertSee('Dashboard')
             ->assertSee('Laporan')
             ->assertDontSee('Master Data')
-            ->assertDontSee('Transaksi')
+            ->assertDontSee(route('sales.index'))
+            ->assertDontSee(route('purchases.index'))
             ->assertDontSee('Pengguna')
             ->assertDontSee('Pengaturan');
     }

@@ -128,9 +128,11 @@
                     @endcanany
 
                     @can('laporan.lihat')
-                        <div class="pt-2">
-                            <span class="block cursor-not-allowed rounded-md px-3 py-2 font-medium text-slate-400" aria-disabled="true" title="Modul belum tersedia">Laporan</span>
-                        </div>
+                        <a href="{{ route('reports.index') }}" @click="sidebarOpen = false" @class([
+                            'mt-2 block rounded-md px-3 py-2 font-medium',
+                            'bg-indigo-50 text-indigo-700' => request()->routeIs('reports.*'),
+                            'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('reports.*'),
+                        ])>Laporan</a>
                     @endcan
 
                     @can('user.kelola')
