@@ -10,7 +10,12 @@
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
                     Anda berhasil masuk.
-                    <a href="{{ route('transactions.index') }}" class="ms-2 font-semibold text-indigo-700 underline">Kelola transaksi</a>
+                    @canany(['penjualan.lihat', 'pembelian.lihat'])
+                        <a href="{{ route('transactions.index') }}" class="ms-2 font-semibold text-indigo-700 underline">Kelola transaksi</a>
+                    @endcanany
+                    @can('user.kelola')
+                        <a href="{{ route('users.index') }}" class="ms-2 font-semibold text-indigo-700 underline">Manajemen pengguna</a>
+                    @endcan
                 </div>
             </div>
         </div>

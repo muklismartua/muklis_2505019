@@ -9,10 +9,15 @@
 <body class="min-h-screen bg-slate-50 text-slate-900">
     <header class="border-b border-slate-200 bg-white">
         <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <a href="{{ route('transactions.index') }}" class="text-lg font-bold text-indigo-700">Tokoku</a>
+            <a href="{{ auth()->check() ? route('dashboard') : route('home') }}" class="text-lg font-bold text-indigo-700">Tokoku</a>
             <nav class="flex items-center gap-4">
                 @auth
-                    <a href="{{ route('transactions.index') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-700">Transaksi</a>
+                    @canany(['penjualan.lihat', 'pembelian.lihat'])
+                        <a href="{{ route('transactions.index') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-700">Transaksi</a>
+                    @endcanany
+                    @can('user.kelola')
+                        <a href="{{ route('users.index') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-700">Pengguna</a>
+                    @endcan
                     <span class="hidden text-sm text-slate-600 sm:inline">{{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
@@ -20,7 +25,6 @@
                     </form>
                 @else
                     <a href="{{ route('login') }}" class="text-sm font-medium text-slate-700 hover:text-indigo-700">Masuk</a>
-                    <a href="{{ route('register') }}" class="text-sm font-medium text-indigo-700 hover:underline">Daftar</a>
                 @endauth
             </nav>
         </div>

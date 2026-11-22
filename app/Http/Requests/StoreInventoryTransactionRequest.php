@@ -10,7 +10,11 @@ class StoreInventoryTransactionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true;
+        $permission = $this->input('type') === 'pembelian'
+            ? 'pembelian.kelola'
+            : 'penjualan.kelola';
+
+        return $this->user()?->can($permission) ?? false;
     }
 
     /**

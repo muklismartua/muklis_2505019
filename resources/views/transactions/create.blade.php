@@ -15,14 +15,18 @@
         </div>
     @endif
 
-    <form id="transaction-form" data-type="{{ old('type', 'penjualan') }}" method="POST" action="{{ route('transactions.store') }}" class="space-y-6">
+    <form id="transaction-form" data-type="{{ old('type', $defaultType) }}" method="POST" action="{{ route('transactions.store') }}" class="space-y-6">
         @csrf
         <section class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 sm:grid-cols-2">
             <div>
                 <label for="type" class="mb-1 block text-sm font-medium">Jenis transaksi</label>
                 <select id="type" name="type" required class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    <option value="penjualan" @selected(old('type', 'penjualan') === 'penjualan')>Penjualan (stok keluar)</option>
-                    <option value="pembelian" @selected(old('type') === 'pembelian')>Pembelian (stok masuk)</option>
+                    @if ($canCreateSales)
+                        <option value="penjualan" @selected(old('type', $defaultType) === 'penjualan')>Penjualan (stok keluar)</option>
+                    @endif
+                    @if ($canCreatePurchases)
+                        <option value="pembelian" @selected(old('type', $defaultType) === 'pembelian')>Pembelian (stok masuk)</option>
+                    @endif
                 </select>
             </div>
             <div>

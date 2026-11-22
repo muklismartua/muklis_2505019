@@ -15,6 +15,16 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @canany(['penjualan.lihat', 'pembelian.lihat'])
+                        <x-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                            Transaksi
+                        </x-nav-link>
+                    @endcanany
+                    @can('user.kelola')
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                            Manajemen Pengguna
+                        </x-nav-link>
+                    @endcan
                 </div>
             </div>
 
@@ -70,6 +80,16 @@
             <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
+            @canany(['penjualan.lihat', 'pembelian.lihat'])
+                <x-responsive-nav-link :href="route('transactions.index')" :active="request()->routeIs('transactions.*')">
+                    Transaksi
+                </x-responsive-nav-link>
+            @endcanany
+            @can('user.kelola')
+                <x-responsive-nav-link :href="route('users.index')" :active="request()->routeIs('users.*')">
+                    Manajemen Pengguna
+                </x-responsive-nav-link>
+            @endcan
         </div>
 
         <!-- Responsive Settings Options -->

@@ -23,5 +23,7 @@ return [
         'name' => 'nama',
         'password' => 'kata sandi',
         'password_confirmation' => 'konfirmasi kata sandi',
+        'role' => 'role',
+        'is_active' => 'status akun',
     ],
 ];

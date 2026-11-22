@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
 use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,7 +17,12 @@ class InventoryTransactionTest extends TestCase
     {
         parent::setUp();
 
-        $this->actingAs(User::factory()->create());
+        $this->seed(RolePermissionSeeder::class);
+
+        $user = User::factory()->create();
+        $user->assignRole('admin');
+
+        $this->actingAs($user);
     }
 
     public function test_transaction_pages_render(): void

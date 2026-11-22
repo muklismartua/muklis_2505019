@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\UserManagementService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -40,13 +41,19 @@ class ProfileController extends Controller
     /**
      * Delete the user's account.
      */
-    public function destroy(Request $request): RedirectResponse
+    public function destroy(Request $request, UserManagementService $userManagementService): RedirectResponse
     {
         $request->validateWithBag('userDeletion', [
             'password' => ['required', 'current_password'],
         ]);
 
         $user = $request->user();
+
+        if ($user->is_active && $user->hasRole('admin') && ! $userManagementService->hasAnotherActiveAdmin($user)) {
+            return Redirect::back()->withErrors([
+                'password' => 'Administrator aktif terakhir tidak dapat menghapus akunnya.',
+            ], 'userDeletion');
+        }
 
         Auth::logout();
 
