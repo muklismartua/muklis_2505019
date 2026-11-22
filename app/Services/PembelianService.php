@@ -13,6 +13,7 @@ class PembelianService
     public function __construct(
         private readonly NomorTransaksiService $nomorTransaksiService,
         private readonly StockService $stockService,
+        private readonly ActivityLogService $activityLogService,
     ) {}
 
     /**
@@ -122,6 +123,13 @@ class PembelianService
                 }
             }
 
+            $this->activityLogService->catat(
+                'pembelian.dibuat',
+                "Pembelian {$purchase->nomor} berhasil dibuat.",
+                $purchase,
+                $user,
+            );
+
             return $purchase->load(['items.product', 'supplier', 'user']);
         });
     }
@@ -178,6 +186,12 @@ class PembelianService
             }
 
             $purchase->update(['status' => Purchase::STATUS_CANCELLED]);
+            $this->activityLogService->catat(
+                'pembelian.dibatalkan',
+                "Pembelian {$purchase->nomor} dibatalkan.",
+                $purchase,
+                $user,
+            );
 
             return $purchase->load(['items.product', 'supplier', 'user']);
         });

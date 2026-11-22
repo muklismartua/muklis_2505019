@@ -77,6 +77,12 @@ class SaleManagementTest extends TestCase
             'referensi_type' => Sale::class,
             'referensi_id' => $sale->id,
         ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $this->admin->id,
+            'aksi' => 'penjualan.dibuat',
+            'subject_type' => Sale::class,
+            'subject_id' => $sale->id,
+        ]);
 
         $this->get(route('sales.show', $sale))
             ->assertOk()
@@ -108,6 +114,25 @@ class SaleManagementTest extends TestCase
         $this->assertSame('PJ-'.now()->format('Ymd').'-0002', $sales[1]->nomor);
         $this->assertSame(0, $sales[0]->kembalian);
         $this->assertSame(0, $sales[1]->kembalian);
+    }
+
+    public function test_percentage_tax_is_calculated_on_the_discounted_subtotal_on_the_server(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 10000, 'stok' => 2]);
+
+        $this->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'diskon' => 1000,
+            'pajak' => 9999,
+            'pajak_persen' => 11,
+            'bayar' => 9990,
+            'metode_pembayaran' => 'tunai',
+            'items' => [['product_id' => $product->id, 'qty' => 1, 'diskon' => 0]],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame(990, $sale->pajak);
+        $this->assertSame(9990, $sale->total);
     }
 
     public function test_insufficient_stock_rolls_back_the_entire_multi_item_sale(): void
@@ -154,6 +179,12 @@ class SaleManagementTest extends TestCase
             'qty' => 3,
             'referensi_type' => Sale::class,
             'referensi_id' => $sale->id,
+        ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $this->admin->id,
+            'aksi' => 'penjualan.dibatalkan',
+            'subject_type' => Sale::class,
+            'subject_id' => $sale->id,
         ]);
 
         $this->patch(route('sales.cancel', $sale))->assertSessionHasErrors('status');

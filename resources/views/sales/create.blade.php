@@ -13,6 +13,7 @@
     $initialValues = [
         'diskon' => old('diskon', 0),
         'pajak' => old('pajak', 0),
+        'pajak_persen' => old('pajak_persen', $defaultTaxRate),
         'bayar' => old('bayar', 0),
         'metode_pembayaran' => old('metode_pembayaran', 'tunai'),
     ];
@@ -64,7 +65,18 @@
             />
             <x-ui.input name="bayar" label="Bayar (rupiah)" type="number" min="0" step="1" :value="old('bayar', 0)" x-model.number="bayar" required />
             <x-ui.input name="diskon" label="Diskon transaksi (rupiah)" type="number" min="0" step="1" :value="old('diskon', 0)" x-model.number="diskon" />
-            <x-ui.input name="pajak" label="Pajak (rupiah)" type="number" min="0" step="1" :value="old('pajak', 0)" x-model.number="pajak" required />
+            <x-ui.input
+                name="pajak_persen"
+                label="Pajak (%)"
+                type="number"
+                min="0"
+                max="100"
+                step="0.01"
+                :value="old('pajak_persen', $defaultTaxRate)"
+                x-model.number="pajakPersen"
+                required
+            />
+            <input type="hidden" name="pajak" :value="pajak">
             <div class="sm:col-span-2">
                 <label for="catatan" class="mb-1 block text-sm font-medium text-slate-700">Catatan <span class="font-normal text-slate-500">(opsional)</span></label>
                 <textarea id="catatan" name="catatan" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('catatan') }}</textarea>
@@ -172,6 +184,11 @@
                         <tr>
                             <th colspan="4" class="px-5 py-3 text-right">Subtotal item</th>
                             <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(subtotal)"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th colspan="4" class="px-5 py-3 text-right">Pajak (<span x-text="pajakPersen"></span>%)</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(pajak)"></th>
                             <th></th>
                         </tr>
                         <tr>

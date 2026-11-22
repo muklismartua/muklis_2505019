@@ -13,6 +13,7 @@ class PenjualanService
     public function __construct(
         private readonly NomorTransaksiService $nomorTransaksiService,
         private readonly StockService $stockService,
+        private readonly ActivityLogService $activityLogService,
     ) {}
 
     /**
@@ -21,6 +22,7 @@ class PenjualanService
      *     tanggal: string,
      *     diskon?: int|string,
      *     pajak?: int|string,
+     *     pajak_persen?: int|float|string,
      *     bayar: int|string,
      *     metode_pembayaran: string,
      *     catatan?: ?string,
@@ -78,12 +80,24 @@ class PenjualanService
             }
 
             $discount = (int) ($data['diskon'] ?? 0);
-            $tax = (int) ($data['pajak'] ?? 0);
             $payment = (int) $data['bayar'];
+            $taxRate = array_key_exists('pajak_persen', $data) ? (float) $data['pajak_persen'] : null;
 
-            if ($discount < 0 || $tax < 0 || $payment < 0) {
+            if ($discount < 0) {
                 throw ValidationException::withMessages([
-                    'diskon' => 'Diskon, pajak, dan jumlah bayar tidak boleh bernilai negatif.',
+                    'diskon' => 'Diskon tidak boleh bernilai negatif.',
+                ]);
+            }
+
+            if ($payment < 0) {
+                throw ValidationException::withMessages([
+                    'bayar' => 'Jumlah bayar tidak boleh bernilai negatif.',
+                ]);
+            }
+
+            if ($taxRate !== null && ($taxRate < 0 || $taxRate > 100)) {
+                throw ValidationException::withMessages([
+                    'pajak_persen' => 'Persentase pajak harus antara 0 sampai 100.',
                 ]);
             }
 
@@ -94,6 +108,16 @@ class PenjualanService
             }
 
             $totalBeforeTax = $subtotal - $discount;
+            $tax = $taxRate === null
+                ? (int) ($data['pajak'] ?? 0)
+                : $this->hitungPajak($totalBeforeTax, $taxRate);
+
+            if ($tax < 0) {
+                throw ValidationException::withMessages([
+                    'pajak' => 'Pajak tidak boleh bernilai negatif.',
+                ]);
+            }
+
             $total = $this->add($totalBeforeTax, $tax, 'Total penjualan melebihi batas yang dapat dihitung.');
             $paymentMethod = $data['metode_pembayaran'];
 
@@ -149,6 +173,13 @@ class PenjualanService
                 );
             }
 
+            $this->activityLogService->catat(
+                'penjualan.dibuat',
+                "Penjualan {$sale->nomor} berhasil dibuat.",
+                $sale,
+                $user,
+            );
+
             return $sale->load(['items.product', 'customer', 'user']);
         });
     }
@@ -193,9 +224,24 @@ class PenjualanService
             }
 
             $sale->update(['status' => Sale::STATUS_CANCELLED]);
+            $this->activityLogService->catat(
+                'penjualan.dibatalkan',
+                "Penjualan {$sale->nomor} dibatalkan.",
+                $sale,
+                $user,
+            );
 
             return $sale->load(['items.product', 'customer', 'user']);
         });
+    }
+
+    private function hitungPajak(int $dasarPajak, float $persentase): int
+    {
+        $basisPoin = (int) round($persentase * 100);
+        $bagianUtuh = intdiv($dasarPajak, 10000) * $basisPoin;
+        $sisa = ($dasarPajak % 10000) * $basisPoin;
+
+        return $bagianUtuh + intdiv($sisa + 5000, 10000);
     }
 
     private function multiply(int $price, int $quantity): int

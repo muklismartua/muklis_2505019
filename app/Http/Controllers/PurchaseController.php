@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Services\PembelianService;
+use App\Services\StoreSettingsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -65,11 +66,15 @@ class PurchaseController extends Controller
         return view('purchases.show', compact('purchase'));
     }
 
-    public function pdf(Request $request, Purchase $purchase): Response
+    public function pdf(
+        Request $request,
+        Purchase $purchase,
+        StoreSettingsService $storeSettingsService,
+    ): Response
     {
         abort_unless($request->user()->canAny(['pembelian.lihat', 'pembelian.kelola']), 403);
         $purchase->load(['items.product', 'supplier', 'user']);
-        $store = config('store');
+        $store = $storeSettingsService->forDocument();
         $isCancelled = $purchase->status === Purchase::STATUS_CANCELLED;
 
         return Pdf::loadView('pdf.purchases.receipt', compact('purchase', 'store', 'isCancelled'))

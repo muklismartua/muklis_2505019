@@ -144,8 +144,20 @@
                     @endcan
 
                     @can('pengaturan.kelola')
-                        <span class="mt-2 block cursor-not-allowed rounded-md px-3 py-2 font-medium text-slate-400" aria-disabled="true" title="Modul belum tersedia">Pengaturan</span>
+                        <a href="{{ route('settings.edit') }}" @click="sidebarOpen = false" @class([
+                            'mt-2 block rounded-md px-3 py-2 font-medium',
+                            'bg-indigo-50 text-indigo-700' => request()->routeIs('settings.*'),
+                            'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('settings.*'),
+                        ])>Pengaturan</a>
                     @endcan
+
+                    @role('admin')
+                        <a href="{{ route('activity-logs.index') }}" @click="sidebarOpen = false" @class([
+                            'mt-2 block rounded-md px-3 py-2 font-medium',
+                            'bg-indigo-50 text-indigo-700' => request()->routeIs('activity-logs.*'),
+                            'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('activity-logs.*'),
+                        ])>Log Aktivitas</a>
+                    @endrole
                 </nav>
             </aside>
         @endauth

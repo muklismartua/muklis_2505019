@@ -9,6 +9,7 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\PenjualanService;
+use App\Services\StoreSettingsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Response;
@@ -36,7 +37,7 @@ class SaleController extends Controller
         return view('sales.index', compact('sales', 'customers'));
     }
 
-    public function create(Request $request): View
+    public function create(Request $request, StoreSettingsService $storeSettingsService): View
     {
         abort_unless($request->user()->can('penjualan.kelola'), 403);
 
@@ -45,8 +46,9 @@ class SaleController extends Controller
             ->where('aktif', true)
             ->orderBy('nama')
             ->get(['id', 'sku', 'nama', 'harga_jual', 'stok']);
+        $defaultTaxRate = (float) $storeSettingsService->get('persentase_pajak_default');
 
-        return view('sales.create', compact('customers', 'products'));
+        return view('sales.create', compact('customers', 'products', 'defaultTaxRate'));
     }
 
     public function store(StoreSaleRequest $request, PenjualanService $penjualanService): RedirectResponse
@@ -66,11 +68,11 @@ class SaleController extends Controller
         return view('sales.show', compact('sale'));
     }
 
-    public function pdf(Request $request, Sale $sale): Response
+    public function pdf(Request $request, Sale $sale, StoreSettingsService $storeSettingsService): Response
     {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
         $sale->load(['items.product', 'customer', 'user']);
-        $store = config('store');
+        $store = $storeSettingsService->forDocument();
         $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
 
         return Pdf::loadView('pdf.sales.invoice', compact('sale', 'store', 'isCancelled'))
@@ -78,11 +80,15 @@ class SaleController extends Controller
             ->download("invoice-{$sale->nomor}.pdf");
     }
 
-    public function receipt(Request $request, Sale $sale): Response
+    public function receipt(
+        Request $request,
+        Sale $sale,
+        StoreSettingsService $storeSettingsService,
+    ): Response
     {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
         $sale->load(['items.product', 'customer', 'user']);
-        $store = config('store');
+        $store = $storeSettingsService->forDocument();
         $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
         $paperHeightMm = max(120, 96 + ($sale->items->count() * 15));
         $paperHeightPoints = $paperHeightMm * 72 / 25.4;

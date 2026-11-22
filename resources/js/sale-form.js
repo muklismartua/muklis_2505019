@@ -30,7 +30,7 @@ export default (products, initialItems, initialValues = {}) => {
         query: '',
         error: '',
         diskon: Number(initialValues.diskon ?? 0),
-        pajak: Number(initialValues.pajak ?? 0),
+        pajakPersen: Number(initialValues.pajak_persen ?? 0),
         bayar: Number(initialValues.bayar ?? 0),
         metodePembayaran: initialValues.metode_pembayaran ?? 'tunai',
 
@@ -50,8 +50,14 @@ export default (products, initialItems, initialValues = {}) => {
             return this.items.reduce((sum, item) => sum + this.subtotalItem(item), 0);
         },
 
+        get pajak() {
+            const taxableAmount = Math.max(this.subtotal - Math.max(Number(this.diskon || 0), 0), 0);
+
+            return Math.round((taxableAmount * Math.max(Number(this.pajakPersen || 0), 0)) / 100);
+        },
+
         get total() {
-            return Math.max(this.subtotal - Math.max(Number(this.diskon || 0), 0) + Math.max(Number(this.pajak || 0), 0), 0);
+            return Math.max(this.subtotal - Math.max(Number(this.diskon || 0), 0) + this.pajak, 0);
         },
 
         get kembalian() {

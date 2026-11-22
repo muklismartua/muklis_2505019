@@ -8,14 +8,22 @@ use Illuminate\Support\Str;
 
 class NomorTransaksiService
 {
+    public function __construct(private readonly StoreSettingsService $storeSettingsService) {}
+
     public function nomorPembelian(): string
     {
-        return $this->nomorHarian(Purchase::class, 'PB');
+        return $this->nomorHarian(
+            Purchase::class,
+            $this->storeSettingsService->get('prefix_pembelian'),
+        );
     }
 
     public function nomorPenjualan(): string
     {
-        return $this->nomorHarian(Sale::class, 'PJ');
+        return $this->nomorHarian(
+            Sale::class,
+            $this->storeSettingsService->get('prefix_penjualan'),
+        );
     }
 
     /**

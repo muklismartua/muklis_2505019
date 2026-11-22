@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\MasterData\CategoryController;
 use App\Http\Controllers\MasterData\CustomerController;
 use App\Http\Controllers\MasterData\ProductController;
@@ -13,6 +14,7 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +50,16 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/reports/{report}', [ReportController::class, 'index'])
         ->middleware('permission:laporan.lihat')
         ->name('reports.show');
+
+    Route::middleware('role:admin')->group(function () {
+        Route::get('/activity-logs', [ActivityLogController::class, 'index'])
+            ->name('activity-logs.index');
+    });
+
+    Route::middleware(['role:admin', 'permission:pengaturan.kelola'])->group(function () {
+        Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+        Route::patch('/settings', [SettingsController::class, 'update'])->name('settings.update');
+    });
 
     Route::get('/stock', [StockMovementController::class, 'index'])
         ->middleware('permission:stok.lihat')

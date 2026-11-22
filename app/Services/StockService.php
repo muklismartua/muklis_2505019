@@ -14,6 +14,8 @@ use InvalidArgumentException;
 
 class StockService
 {
+    public function __construct(private readonly ActivityLogService $activityLogService) {}
+
     public function tambah(
         Product $product,
         int $qty,
@@ -120,7 +122,7 @@ class StockService
             $lockedProduct->stok = $qtyFisik;
             $lockedProduct->save();
 
-            return $this->recordMovement(
+            $movement = $this->recordMovement(
                 $lockedProduct,
                 'penyesuaian',
                 abs($difference),
@@ -130,6 +132,15 @@ class StockService
                 $reason,
                 $user,
             );
+
+            $this->activityLogService->catat(
+                'stok.disesuaikan',
+                "Stok {$lockedProduct->nama} disesuaikan dari {$stockBefore} menjadi {$qtyFisik}. Alasan: {$reason}",
+                $adjustment,
+                $user,
+            );
+
+            return $movement;
         });
     }
 

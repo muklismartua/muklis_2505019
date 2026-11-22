@@ -74,6 +74,12 @@ class PurchaseManagementTest extends TestCase
             'referensi_type' => Purchase::class,
             'referensi_id' => $purchase->id,
         ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $this->admin->id,
+            'aksi' => 'pembelian.dibuat',
+            'subject_type' => Purchase::class,
+            'subject_id' => $purchase->id,
+        ]);
 
         $this->get(route('purchases.show', $purchase))
             ->assertOk()
@@ -135,6 +141,12 @@ class PurchaseManagementTest extends TestCase
             'referensi_type' => Purchase::class,
             'referensi_id' => $purchase->id,
         ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $this->admin->id,
+            'aksi' => 'pembelian.dibatalkan',
+            'subject_type' => Purchase::class,
+            'subject_id' => $purchase->id,
+        ]);
 
         $this->patch(route('purchases.cancel', $purchase))->assertSessionHasErrors('status');
         $this->assertDatabaseCount('stock_movements', 2);
@@ -159,7 +171,7 @@ class PurchaseManagementTest extends TestCase
         $supplier = Supplier::factory()->create();
         $first = Product::factory()->create(['sku' => 'ROLLBACK-1', 'stok' => 3]);
         $second = Product::factory()->create(['sku' => 'ROLLBACK-2', 'stok' => 4]);
-        $realStockService = new StockService;
+        $realStockService = app(StockService::class);
         $callCount = 0;
         $stockService = Mockery::mock(StockService::class);
         $stockService->shouldReceive('tambah')

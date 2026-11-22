@@ -7,8 +7,11 @@
         @endif
         <td>
             <h1 class="store-name">{{ $store['name'] }}</h1>
-            @if ($store['address'] !== '')
+            @if (! empty($store['address']))
                 <p class="store-address">{{ $store['address'] }}</p>
+            @endif
+            @if (! empty($store['phone']))
+                <p class="store-address">Telepon: {{ $store['phone'] }}</p>
             @endif
         </td>
     </tr>

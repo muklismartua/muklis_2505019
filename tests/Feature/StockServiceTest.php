@@ -79,6 +79,12 @@ class StockServiceTest extends TestCase
         $this->assertSame(3, $movement->qty);
         $this->assertSame(StockAdjustment::class, $movement->referensi_type);
         $this->assertSame($adjustment->id, $movement->referensi_id);
+        $this->assertDatabaseHas('activity_logs', [
+            'user_id' => $this->user->id,
+            'aksi' => 'stok.disesuaikan',
+            'subject_type' => StockAdjustment::class,
+            'subject_id' => $adjustment->id,
+        ]);
     }
 
     public function test_movement_quantity_must_be_positive(): void

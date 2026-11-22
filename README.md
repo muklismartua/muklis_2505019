@@ -1,26 +1,89 @@
 # Tokoku
 
-Aplikasi manajemen stok dan transaksi multi-item berbasis Laravel 12, Blade, Tailwind CSS, Alpine.js, dan SQLite.
+Aplikasi manajemen stok dan transaksi multi-item berbasis web dengan Laravel 12, PHP 8.2+, SQLite, Blade, Tailwind CSS, Alpine.js, Laravel Breeze, Spatie Permission, DomPDF, dan Laravel Excel.
 
-## Menjalankan aplikasi
+## Persyaratan
+
+- PHP 8.2 atau lebih baru beserta ekstensi Laravel yang diperlukan, termasuk PDO SQLite
+- Composer
+- Node.js dan npm
+
+## Instalasi
+
+Jalankan dari folder proyek:
 
 ```powershell
 composer install
-npm install
-php artisan migrate --seed
-php artisan storage:link
+Copy-Item .env.example .env
+php artisan key:generate
+New-Item -ItemType File -Force database\database.sqlite
 ```
 
-Jalankan `npm run dev` dan `php artisan serve` pada dua terminal terpisah.
+Pastikan `.env` mengatur SQLite:
 
-Seed membuat akun admin `admin@example.com` dengan kata sandi awal `password`, role aplikasi, serta data contoh master data dan produk. Ganti kata sandi awal sebelum aplikasi digunakan.
+```dotenv
+DB_CONNECTION=sqlite
+DB_DATABASE=database/database.sqlite
+```
 
-## Master data
+Hapus variabel koneksi DB host/port/username/password jika masih ada. Lalu migrasikan basis data, buat akun dan data contoh, serta tautkan penyimpanan foto:
 
-Modul kategori, satuan, supplier, pelanggan, dan produk menggunakan permission dari Spatie Laravel Permission. Produk menyimpan harga sebagai rupiah integer, fotonya berada pada disk `public`, dan penghapusan produk menggunakan soft delete. Stok awal produk dibuat nol dan perubahan stok dilakukan oleh layanan transaksi stok.
+```powershell
+php artisan migrate --seed
+php artisan storage:link
+npm install
+npm run build
+```
 
-Perubahan stok harus menggunakan `App\Services\StockService`. Riwayat tercatat di kartu stok; stok opname mencatat jumlah sistem, jumlah fisik, selisih, alasan, dan pengguna. Produk dengan stok sama dengan atau di bawah stok minimum tampil pada daftar stok menipis.
+Jika perlu mengisi ulang database lokal dari awal, jalankan `php artisan migrate:fresh --seed`. Perintah ini menghapus semua data yang tersimpan.
 
-Modul pembelian membuat nomor harian `PB-YYYYMMDD-####`, mencatat item dan diskon, serta menambah stok melalui `StockService`. Pembatalan pembelian memeriksa stok tersedia sebelum mengurangi kembali stok.
+## Menjalankan aplikasi
 
-Jalankan tes dengan `php artisan test`.
+Buka dua terminal di folder proyek. Jalankan Vite pada terminal pertama:
+
+```powershell
+npm run dev
+```
+
+Jalankan aplikasi Laravel pada terminal kedua:
+
+```powershell
+php artisan serve
+```
+
+Buka URL yang ditampilkan Artisan, biasanya `http://127.0.0.1:8000`.
+
+## Akun awal
+
+Semua akun seeder memakai kata sandi awal `password`. Ganti kata sandi sebelum aplikasi dipakai:
+
+| Role | Email |
+| --- | --- |
+| Admin | `admin@example.com` |
+| Staf gudang | `staf_gudang@example.com` |
+| Kasir | `kasir@example.com` |
+| Owner | `owner@example.com` |
+
+Registrasi publik dinonaktifkan. Admin dapat mengelola pengguna dan role dari menu **Pengguna**.
+
+## Fitur
+
+- Hak akses berbasis role dan permission untuk admin, staf gudang, kasir, dan owner.
+- CRUD kategori, satuan, supplier, pelanggan, dan produk, termasuk pencarian, pagination, status aktif, upload foto, serta penghapusan produk secara soft delete.
+- Kartu stok, stok opname, riwayat mutasi, dan daftar produk stok menipis. Setiap perubahan stok dilakukan melalui `StockService` dan tercatat.
+- Transaksi pembelian dan penjualan multi-item, validasi stok di server, pembatalan transaksi, dan nomor transaksi harian dengan prefix yang dapat diatur.
+- Invoice penjualan PDF, nota penjualan 80 mm, dan bukti pembelian PDF.
+- Dashboard ringkasan, grafik penjualan, laporan penjualan/pembelian/stok/mutasi/laba-rugi dengan ekspor Excel dan PDF.
+- Log aktivitas login, perubahan master data, transaksi, dan stok opname; hanya admin yang dapat mengaksesnya.
+- Pengaturan informasi toko, logo, prefix transaksi, dan persentase pajak default.
+- Antarmuka dan pesan validasi berbahasa Indonesia, dengan halaman kesalahan 403 dan 404 yang ramah.
+
+Nominal disimpan sebagai bilangan bulat rupiah. Zona waktu aplikasi menggunakan `Asia/Jakarta`.
+
+## Pengujian dan pemeriksaan
+
+```powershell
+php artisan test
+vendor\bin\pint --test
+npm run build
+```

@@ -18,7 +18,8 @@ class StoreSaleRequest extends FormRequest
             'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
             'tanggal' => ['required', 'date'],
             'diskon' => ['nullable', 'integer', 'min:0'],
-            'pajak' => ['required', 'integer', 'min:0'],
+            'pajak' => ['nullable', 'integer', 'min:0'],
+            'pajak_persen' => ['nullable', 'numeric', 'between:0,100'],
             'bayar' => ['required', 'integer', 'min:0'],
             'metode_pembayaran' => ['required', Rule::in(['tunai', 'transfer', 'tempo'])],
             'catatan' => ['nullable', 'string', 'max:2000'],
@@ -38,6 +39,7 @@ class StoreSaleRequest extends FormRequest
             'items.*.product_id.distinct' => 'Produk yang sama tidak boleh ditambahkan lebih dari satu kali.',
             'items.*.product_id.exists' => 'Produk yang dipilih tidak tersedia.',
             'items.*.qty.min' => 'Jumlah produk minimal 1.',
+            'pajak_persen.between' => 'Persentase pajak harus antara 0 sampai 100.',
         ];
     }
 }
