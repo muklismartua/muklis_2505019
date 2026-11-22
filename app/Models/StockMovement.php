@@ -4,25 +4,28 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class StockMovement extends Model
 {
     protected $fillable = [
         'product_id',
-        'inventory_transaction_id',
-        'inventory_transaction_item_id',
-        'type',
-        'quantity',
-        'stock_before',
-        'stock_after',
+        'tipe',
+        'qty',
+        'stok_sebelum',
+        'stok_sesudah',
+        'referensi_type',
+        'referensi_id',
+        'keterangan',
+        'user_id',
     ];
 
     protected function casts(): array
     {
         return [
-            'quantity' => 'integer',
-            'stock_before' => 'integer',
-            'stock_after' => 'integer',
+            'qty' => 'integer',
+            'stok_sebelum' => 'integer',
+            'stok_sesudah' => 'integer',
         ];
     }
 
@@ -31,13 +34,13 @@ class StockMovement extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function transaction(): BelongsTo
+    public function referensi(): MorphTo
     {
-        return $this->belongsTo(InventoryTransaction::class, 'inventory_transaction_id');
+        return $this->morphTo();
     }
 
-    public function transactionItem(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(InventoryTransactionItem::class, 'inventory_transaction_item_id');
+        return $this->belongsTo(User::class);
     }
 }

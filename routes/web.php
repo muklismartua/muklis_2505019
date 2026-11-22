@@ -7,6 +7,8 @@ use App\Http\Controllers\MasterData\ProductController;
 use App\Http\Controllers\MasterData\SupplierController;
 use App\Http\Controllers\MasterData\UnitController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -29,6 +31,26 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->middleware('permission:pelanggan.lihat|pelanggan.kelola');
     Route::resource('products', ProductController::class)
         ->middleware('permission:produk.lihat|produk.kelola');
+
+    Route::get('/stock', [StockMovementController::class, 'index'])
+        ->middleware('permission:stok.lihat')
+        ->name('stock.index');
+    Route::get('/stock/low-stock', [StockMovementController::class, 'lowStock'])
+        ->middleware('permission:stok.lihat')
+        ->name('stock.low-stock');
+    Route::get('/stock/{product}', [StockMovementController::class, 'show'])
+        ->middleware('permission:stok.lihat')
+        ->name('stock.show');
+
+    Route::get('/stock-adjustments', [StockAdjustmentController::class, 'index'])
+        ->middleware('permission:stok.lihat')
+        ->name('stock-adjustments.index');
+    Route::get('/stock-adjustments/create', [StockAdjustmentController::class, 'create'])
+        ->middleware('permission:stok.kelola')
+        ->name('stock-adjustments.create');
+    Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
+        ->middleware('permission:stok.kelola')
+        ->name('stock-adjustments.store');
 
     Route::get('/transactions', [InventoryTransactionController::class, 'index'])
         ->middleware('permission:penjualan.lihat|pembelian.lihat')

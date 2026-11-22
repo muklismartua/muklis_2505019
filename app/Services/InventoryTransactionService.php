@@ -70,7 +70,13 @@ class InventoryTransactionService
                     'subtotal' => $subtotal,
                 ]);
 
-                $this->stockService->recordTransactionMovement($transaction, $item);
+                $description = ucfirst($transaction->type).' '.$transaction->transaction_number;
+
+                if ($transaction->type === InventoryTransaction::TYPE_PURCHASE) {
+                    $this->stockService->tambah($product, $quantity, $transaction, $description, $user);
+                } else {
+                    $this->stockService->kurangi($product, $quantity, $transaction, $description, $user);
+                }
                 $total += $subtotal;
             }
 

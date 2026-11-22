@@ -19,4 +19,6 @@ Seed membuat akun admin `admin@example.com` dengan kata sandi awal `password`, r
 
 Modul kategori, satuan, supplier, pelanggan, dan produk menggunakan permission dari Spatie Laravel Permission. Produk menyimpan harga sebagai rupiah integer, fotonya berada pada disk `public`, dan penghapusan produk menggunakan soft delete. Stok awal produk dibuat nol dan perubahan stok dilakukan oleh layanan transaksi stok.
 
+Perubahan stok harus menggunakan `App\Services\StockService`. Riwayat tercatat di kartu stok; stok opname mencatat jumlah sistem, jumlah fisik, selisih, alasan, dan pengguna. Produk dengan stok sama dengan atau di bawah stok minimum tampil pada daftar stok menipis.
+
 Jalankan tes dengan `php artisan test`.

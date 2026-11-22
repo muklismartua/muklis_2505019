@@ -66,10 +66,12 @@ class InventoryTransactionTest extends TestCase
         $this->assertDatabaseCount('stock_movements', 2);
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $keyboard->id,
-            'type' => 'masuk',
-            'quantity' => 3,
-            'stock_before' => 4,
-            'stock_after' => 7,
+            'tipe' => 'masuk',
+            'qty' => 3,
+            'stok_sebelum' => 4,
+            'stok_sesudah' => 7,
+            'referensi_type' => InventoryTransaction::class,
+            'referensi_id' => $transaction->id,
         ]);
     }
 
@@ -135,10 +137,10 @@ class InventoryTransactionTest extends TestCase
         $this->assertSame(6, $product->fresh()->stok);
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $product->id,
-            'type' => 'keluar',
-            'quantity' => 2,
-            'stock_before' => 8,
-            'stock_after' => 6,
+            'tipe' => 'keluar',
+            'qty' => 2,
+            'stok_sebelum' => 8,
+            'stok_sesudah' => 6,
         ]);
     }
 }

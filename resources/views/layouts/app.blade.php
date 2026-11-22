@@ -95,11 +95,14 @@
                                 </svg>
                             </button>
                             <div x-show="stockOpen" x-transition class="space-y-1 pl-3">
-                                @canany(['stok.lihat', 'stok.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Kartu Stok</span>
-                                @endcanany
-                                @can('stok.kelola')
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Stok Opname</span>
+                                @can('stok.lihat')
+                                    <a href="{{ route('stock.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('stock.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('stock.*')])>Kartu Stok</a>
+                                    <a href="{{ route('stock-adjustments.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('stock-adjustments.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('stock-adjustments.*')])>Stok Opname</a>
+                                @endcan
+                                @cannot('stok.lihat')
+                                    @can('stok.kelola')
+                                        <a href="{{ route('stock-adjustments.create') }}" @click="sidebarOpen = false" class="block rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">Stok Opname</a>
+                                    @endcan
                                 @endcan
                             </div>
                         </div>

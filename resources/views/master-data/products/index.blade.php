@@ -8,9 +8,14 @@
             <h1 class="text-2xl font-bold">Produk</h1>
             <p class="mt-1 text-sm text-slate-600">Kelola katalog, harga, dan status produk.</p>
         </div>
-        @can('produk.kelola')
-            <a href="{{ route('products.create') }}" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Tambah produk</a>
-        @endcan
+        <div class="flex flex-wrap gap-2">
+            @can('stok.lihat')
+                <a href="{{ route('stock.low-stock') }}" class="inline-flex items-center justify-center rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-semibold text-amber-800 hover:bg-amber-100">Stok menipis</a>
+            @endcan
+            @can('produk.kelola')
+                <a href="{{ route('products.create') }}" class="inline-flex items-center justify-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Tambah produk</a>
+            @endcan
+        </div>
     </div>
 
     <form method="GET" action="{{ route('products.index') }}" class="mb-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -31,7 +36,12 @@
                 <td class="whitespace-nowrap px-5 py-4">{{ $product->unit?->singkatan ?? '—' }}</td>
                 <td class="whitespace-nowrap px-5 py-4 text-right">Rp {{ number_format($product->harga_beli, 0, ',', '.') }}</td>
                 <td class="whitespace-nowrap px-5 py-4 text-right">Rp {{ number_format($product->harga_jual, 0, ',', '.') }}</td>
-                <td class="whitespace-nowrap px-5 py-4 text-right">{{ number_format($product->stok, 0, ',', '.') }}</td>
+                <td class="whitespace-nowrap px-5 py-4 text-right">
+                    <span>{{ number_format($product->stok, 0, ',', '.') }}</span>
+                    @if ($product->stok <= $product->stok_minimum)
+                        <span class="mt-1 block"><x-ui.badge status="warning">Stok menipis</x-ui.badge></span>
+                    @endif
+                </td>
                 <td class="whitespace-nowrap px-5 py-4">
                     <x-ui.badge :status="$product->aktif ? 'active' : 'inactive'">{{ $product->aktif ? 'Aktif' : 'Nonaktif' }}</x-ui.badge>
                 </td>
