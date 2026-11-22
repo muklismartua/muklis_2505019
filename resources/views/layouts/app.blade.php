@@ -121,7 +121,7 @@
                                     <a href="{{ route('purchases.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('purchases.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('purchases.*')])>Pembelian</a>
                                 @endcanany
                                 @canany(['penjualan.lihat', 'penjualan.kelola'])
-                                    <a href="{{ route('transactions.index', ['type' => 'penjualan']) }}" @click="sidebarOpen = false" class="block rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">Penjualan</a>
+                                    <a href="{{ route('sales.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('sales.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('sales.*')])>Penjualan</a>
                                 @endcanany
                             </div>
                         </div>

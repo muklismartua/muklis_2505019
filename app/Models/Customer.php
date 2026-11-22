@@ -16,4 +16,9 @@ class Customer extends Model
     {
         return $this->hasMany(InventoryTransaction::class)->where('type', InventoryTransaction::TYPE_SALE);
     }
+
+    public function sales(): HasMany
+    {
+        return $this->hasMany(Sale::class);
+    }
 }

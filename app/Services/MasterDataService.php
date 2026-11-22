@@ -16,7 +16,7 @@ class MasterDataService
         $inUse = match (true) {
             $record instanceof Category, $record instanceof Unit => $record->products()->withTrashed()->exists(),
             $record instanceof Supplier => $record->transactions()->exists() || $record->purchases()->exists(),
-            $record instanceof Customer => $record->transactions()->exists(),
+            $record instanceof Customer => $record->transactions()->exists() || $record->sales()->exists(),
             default => throw new \InvalidArgumentException('Jenis data master tidak didukung.'),
         };
 

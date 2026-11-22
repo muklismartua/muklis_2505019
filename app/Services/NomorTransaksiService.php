@@ -3,15 +3,29 @@
 namespace App\Services;
 
 use App\Models\Purchase;
+use App\Models\Sale;
 use Illuminate\Support\Str;
 
 class NomorTransaksiService
 {
     public function nomorPembelian(): string
     {
+        return $this->nomorHarian(Purchase::class, 'PB');
+    }
+
+    public function nomorPenjualan(): string
+    {
+        return $this->nomorHarian(Sale::class, 'PJ');
+    }
+
+    /**
+     * @param  class-string<Purchase|Sale>  $modelClass
+     */
+    private function nomorHarian(string $modelClass, string $kode): string
+    {
         $tanggal = now()->format('Ymd');
-        $prefix = "PB-{$tanggal}-";
-        $nomorTerakhir = Purchase::query()
+        $prefix = "{$kode}-{$tanggal}-";
+        $nomorTerakhir = $modelClass::query()
             ->where('nomor', 'like', $prefix.'%')
             ->orderByDesc('nomor')
             ->lockForUpdate()
