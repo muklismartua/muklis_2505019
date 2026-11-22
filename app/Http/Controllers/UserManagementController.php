@@ -34,7 +34,11 @@ class UserManagementController extends Controller
 
     public function create(): View
     {
-        $roles = Role::query()->where('guard_name', 'web')->orderBy('name')->get();
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->orderBy('name')
+            ->pluck('name', 'name')
+            ->map(fn ($role) => str($role)->replace('_', ' ')->title());
 
         return view('users.create', compact('roles'));
     }
@@ -53,7 +57,11 @@ class UserManagementController extends Controller
     public function edit(User $user): View
     {
         $user->load('roles');
-        $roles = Role::query()->where('guard_name', 'web')->orderBy('name')->get();
+        $roles = Role::query()
+            ->where('guard_name', 'web')
+            ->orderBy('name')
+            ->pluck('name', 'name')
+            ->map(fn ($role) => str($role)->replace('_', ' ')->title());
 
         return view('users.edit', compact('user', 'roles'));
     }

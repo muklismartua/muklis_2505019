@@ -1,4 +1,4 @@
-@extends('layouts.transaction')
+@extends('layouts.app')
 
 @section('title', 'Tambah Pengguna')
 
@@ -10,34 +10,14 @@
 
     <form method="POST" action="{{ route('users.store') }}" class="max-w-2xl space-y-5 rounded-lg border border-slate-200 bg-white p-6">
         @csrf
-        <div>
-            <label for="name" class="mb-1 block text-sm font-medium">Nama</label>
-            <input id="name" name="name" value="{{ old('name') }}" required maxlength="255" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-        <div>
-            <label for="email" class="mb-1 block text-sm font-medium">Email</label>
-            <input id="email" name="email" type="email" value="{{ old('email') }}" required maxlength="255" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-        <div>
-            <label for="role" class="mb-1 block text-sm font-medium">Role</label>
-            <select id="role" name="role" required class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-                <option value="">Pilih role</option>
-                @foreach ($roles as $role)
-                    <option value="{{ $role->name }}" @selected(old('role') === $role->name)>{{ str($role->name)->replace('_', ' ')->title() }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div>
-            <label for="password" class="mb-1 block text-sm font-medium">Kata sandi</label>
-            <input id="password" name="password" type="password" required autocomplete="new-password" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
-        <div>
-            <label for="password_confirmation" class="mb-1 block text-sm font-medium">Konfirmasi kata sandi</label>
-            <input id="password_confirmation" name="password_confirmation" type="password" required autocomplete="new-password" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
-        </div>
+        <x-ui.input name="name" label="Nama" :value="old('name')" required maxlength="255" />
+        <x-ui.input name="email" label="Email" type="email" :value="old('email')" required maxlength="255" />
+        <x-ui.select name="role" label="Role" :options="$roles" :selected="old('role')" placeholder="Pilih role" required />
+        <x-ui.input name="password" label="Kata sandi" type="password" required autocomplete="new-password" />
+        <x-ui.input name="password_confirmation" label="Konfirmasi kata sandi" type="password" required autocomplete="new-password" />
         <div class="flex justify-end gap-3">
             <a href="{{ route('users.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Batal</a>
-            <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Simpan pengguna</button>
+            <x-ui.button type="submit">Simpan pengguna</x-ui.button>
         </div>
     </form>
 @endsection

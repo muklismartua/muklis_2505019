@@ -1,23 +1,16 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            Dasbor
-        </h2>
+        <h1 class="text-xl font-semibold text-slate-900">Dashboard</h1>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    Anda berhasil masuk.
-                    @canany(['penjualan.lihat', 'pembelian.lihat'])
-                        <a href="{{ route('transactions.index') }}" class="ms-2 font-semibold text-indigo-700 underline">Kelola transaksi</a>
-                    @endcanany
-                    @can('user.kelola')
-                        <a href="{{ route('users.index') }}" class="ms-2 font-semibold text-indigo-700 underline">Manajemen pengguna</a>
-                    @endcan
-                </div>
-            </div>
-        </div>
+    <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        @foreach (range(1, 4) as $card)
+            <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu ringkasan {{ $card }}">
+                <span class="sr-only">Ringkasan akan ditampilkan pada tahap 9.</span>
+                <div class="h-3 w-2/5 rounded bg-slate-100"></div>
+                <div class="mt-5 h-8 w-1/2 rounded bg-slate-100"></div>
+                <div class="mt-4 h-3 w-3/4 rounded bg-slate-50"></div>
+            </section>
+        @endforeach
     </div>
 </x-app-layout>
