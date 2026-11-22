@@ -9,7 +9,9 @@
             <h1 class="mt-3 text-2xl font-bold">{{ $sale->nomor }}</h1>
             <p class="mt-1 text-sm text-slate-600">Tanggal {{ $sale->tanggal->format('d/m/Y') }} · {{ $sale->customer?->nama ?? 'Pelanggan umum' }}</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('sales.pdf', $sale) }}" class="rounded-md border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Cetak/Unduh PDF</a>
+            <a href="{{ route('sales.receipt', $sale) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cetak nota 80 mm</a>
             <x-ui.badge :status="$sale->status === 'selesai' ? 'success' : 'inactive'">{{ ucfirst($sale->status) }}</x-ui.badge>
             @if ($sale->status === 'selesai')
                 @can('penjualan.kelola')

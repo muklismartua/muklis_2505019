@@ -9,7 +9,9 @@ use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Supplier;
 use App\Services\PembelianService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -61,6 +63,18 @@ class PurchaseController extends Controller
         $purchase->load(['items.product', 'supplier', 'user']);
 
         return view('purchases.show', compact('purchase'));
+    }
+
+    public function pdf(Request $request, Purchase $purchase): Response
+    {
+        abort_unless($request->user()->canAny(['pembelian.lihat', 'pembelian.kelola']), 403);
+        $purchase->load(['items.product', 'supplier', 'user']);
+        $store = config('store');
+        $isCancelled = $purchase->status === Purchase::STATUS_CANCELLED;
+
+        return Pdf::loadView('pdf.purchases.receipt', compact('purchase', 'store', 'isCancelled'))
+            ->setPaper('a4', 'portrait')
+            ->download("bukti-pembelian-{$purchase->nomor}.pdf");
     }
 
     public function cancel(

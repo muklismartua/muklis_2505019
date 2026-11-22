@@ -63,6 +63,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/purchases', [PurchaseController::class, 'store'])
         ->middleware('permission:pembelian.kelola')
         ->name('purchases.store');
+    Route::get('/purchases/{purchase}/pdf', [PurchaseController::class, 'pdf'])
+        ->middleware('permission:pembelian.lihat|pembelian.kelola')
+        ->name('purchases.pdf');
     Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])
         ->middleware('permission:pembelian.lihat|pembelian.kelola')
         ->name('purchases.show');
@@ -79,6 +82,12 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/sales', [SaleController::class, 'store'])
         ->middleware('permission:penjualan.kelola')
         ->name('sales.store');
+    Route::get('/sales/{sale}/pdf', [SaleController::class, 'pdf'])
+        ->middleware('permission:penjualan.lihat|penjualan.kelola')
+        ->name('sales.pdf');
+    Route::get('/sales/{sale}/receipt', [SaleController::class, 'receipt'])
+        ->middleware('permission:penjualan.lihat|penjualan.kelola')
+        ->name('sales.receipt');
     Route::get('/sales/{sale}', [SaleController::class, 'show'])
         ->middleware('permission:penjualan.lihat|penjualan.kelola')
         ->name('sales.show');

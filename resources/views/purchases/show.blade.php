@@ -9,7 +9,8 @@
             <h1 class="mt-3 text-2xl font-bold">{{ $purchase->nomor }}</h1>
             <p class="mt-1 text-sm text-slate-600">Tanggal {{ $purchase->tanggal->format('d/m/Y') }} · {{ $purchase->supplier->nama }}</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
+            <a href="{{ route('purchases.pdf', $purchase) }}" class="rounded-md border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Cetak/Unduh PDF</a>
             <x-ui.badge :status="$purchase->status === 'selesai' ? 'success' : 'inactive'">{{ ucfirst($purchase->status) }}</x-ui.badge>
             @if ($purchase->status === 'selesai')
                 @can('pembelian.kelola')

@@ -9,7 +9,9 @@ use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
 use App\Services\PenjualanService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Response;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -62,6 +64,32 @@ class SaleController extends Controller
         $sale->load(['items.product', 'customer', 'user']);
 
         return view('sales.show', compact('sale'));
+    }
+
+    public function pdf(Request $request, Sale $sale): Response
+    {
+        abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
+        $sale->load(['items.product', 'customer', 'user']);
+        $store = config('store');
+        $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
+
+        return Pdf::loadView('pdf.sales.invoice', compact('sale', 'store', 'isCancelled'))
+            ->setPaper('a4', 'portrait')
+            ->download("invoice-{$sale->nomor}.pdf");
+    }
+
+    public function receipt(Request $request, Sale $sale): Response
+    {
+        abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
+        $sale->load(['items.product', 'customer', 'user']);
+        $store = config('store');
+        $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
+        $paperHeightMm = max(120, 96 + ($sale->items->count() * 15));
+        $paperHeightPoints = $paperHeightMm * 72 / 25.4;
+
+        return Pdf::loadView('pdf.sales.receipt', compact('sale', 'store', 'isCancelled'))
+            ->setPaper([0, 0, 226.77, $paperHeightPoints])
+            ->download("nota-{$sale->nomor}.pdf");
     }
 
     public function cancel(
