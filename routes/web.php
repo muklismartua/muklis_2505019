@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\InventoryTransactionController;
+use App\Http\Controllers\MasterData\CategoryController;
+use App\Http\Controllers\MasterData\CustomerController;
+use App\Http\Controllers\MasterData\ProductController;
+use App\Http\Controllers\MasterData\SupplierController;
+use App\Http\Controllers\MasterData\UnitController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +19,17 @@ Route::get('/dashboard', function () {
 })->middleware(['auth', 'active', 'verified', 'permission:dashboard.lihat'])->name('dashboard');
 
 Route::middleware(['auth', 'active'])->group(function () {
+    Route::resource('categories', CategoryController::class)
+        ->middleware('permission:kategori.lihat|kategori.kelola');
+    Route::resource('units', UnitController::class)
+        ->middleware('permission:satuan.lihat|satuan.kelola');
+    Route::resource('suppliers', SupplierController::class)
+        ->middleware('permission:pemasok.lihat|pemasok.kelola');
+    Route::resource('customers', CustomerController::class)
+        ->middleware('permission:pelanggan.lihat|pelanggan.kelola');
+    Route::resource('products', ProductController::class)
+        ->middleware('permission:produk.lihat|produk.kelola');
+
     Route::get('/transactions', [InventoryTransactionController::class, 'index'])
         ->middleware('permission:penjualan.lihat|pembelian.lihat')
         ->name('transactions.index');

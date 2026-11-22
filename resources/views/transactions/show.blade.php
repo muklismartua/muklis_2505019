@@ -55,5 +55,9 @@
             <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">Catatan</dt>
             <dd class="mt-1 whitespace-pre-line text-sm">{{ $transaction->notes ?: '—' }}</dd>
         </div>
+        <div>
+            <dt class="text-xs font-medium uppercase tracking-wide text-slate-500">{{ $transaction->type === 'pembelian' ? 'Supplier' : 'Pelanggan' }}</dt>
+            <dd class="mt-1 text-sm">{{ $transaction->type === 'pembelian' ? ($transaction->supplier?->nama ?? '—') : ($transaction->customer?->nama ?? '—') }}</dd>
+        </div>
     </dl>
 @endsection

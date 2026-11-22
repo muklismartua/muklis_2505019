@@ -35,17 +35,17 @@ class InventoryTransactionTest extends TestCase
     {
         $keyboard = Product::query()->create([
             'sku' => 'KB-001',
-            'name' => 'Keyboard',
-            'selling_price' => 250000,
-            'purchase_price' => 180000,
-            'stock' => 4,
+            'nama' => 'Keyboard',
+            'harga_jual' => 250000,
+            'harga_beli' => 180000,
+            'stok' => 4,
         ]);
         $mouse = Product::query()->create([
             'sku' => 'MS-001',
-            'name' => 'Mouse',
-            'selling_price' => 100000,
-            'purchase_price' => 65000,
-            'stock' => 10,
+            'nama' => 'Mouse',
+            'harga_jual' => 100000,
+            'harga_beli' => 65000,
+            'stok' => 10,
         ]);
 
         $response = $this->post(route('transactions.store'), [
@@ -60,8 +60,8 @@ class InventoryTransactionTest extends TestCase
         $transaction = InventoryTransaction::query()->firstOrFail();
         $response->assertRedirect(route('transactions.show', $transaction));
         $this->assertSame(865000, $transaction->total);
-        $this->assertSame(7, $keyboard->fresh()->stock);
-        $this->assertSame(15, $mouse->fresh()->stock);
+        $this->assertSame(7, $keyboard->fresh()->stok);
+        $this->assertSame(15, $mouse->fresh()->stok);
         $this->assertDatabaseCount('inventory_transaction_items', 2);
         $this->assertDatabaseCount('stock_movements', 2);
         $this->assertDatabaseHas('stock_movements', [
@@ -77,17 +77,17 @@ class InventoryTransactionTest extends TestCase
     {
         $first = Product::query()->create([
             'sku' => 'A-001',
-            'name' => 'Produk A',
-            'selling_price' => 50000,
-            'purchase_price' => 30000,
-            'stock' => 10,
+            'nama' => 'Produk A',
+            'harga_jual' => 50000,
+            'harga_beli' => 30000,
+            'stok' => 10,
         ]);
         $second = Product::query()->create([
             'sku' => 'B-001',
-            'name' => 'Produk B',
-            'selling_price' => 75000,
-            'purchase_price' => 45000,
-            'stock' => 1,
+            'nama' => 'Produk B',
+            'harga_jual' => 75000,
+            'harga_beli' => 45000,
+            'stok' => 1,
         ]);
 
         $response = $this->from(route('transactions.create'))->post(route('transactions.store'), [
@@ -101,8 +101,8 @@ class InventoryTransactionTest extends TestCase
 
         $response->assertRedirect(route('transactions.create'));
         $response->assertSessionHasErrors('items');
-        $this->assertSame(10, $first->fresh()->stock);
-        $this->assertSame(1, $second->fresh()->stock);
+        $this->assertSame(10, $first->fresh()->stok);
+        $this->assertSame(1, $second->fresh()->stok);
         $this->assertDatabaseCount('inventory_transactions', 0);
         $this->assertDatabaseCount('inventory_transaction_items', 0);
         $this->assertDatabaseCount('stock_movements', 0);
@@ -112,10 +112,10 @@ class InventoryTransactionTest extends TestCase
     {
         $product = Product::query()->create([
             'sku' => 'SP-001',
-            'name' => 'Produk',
-            'selling_price' => 125000,
-            'purchase_price' => 80000,
-            'stock' => 8,
+            'nama' => 'Produk',
+            'harga_jual' => 125000,
+            'harga_beli' => 80000,
+            'stok' => 8,
         ]);
 
         $response = $this->post(route('transactions.store'), [
@@ -132,7 +132,7 @@ class InventoryTransactionTest extends TestCase
             ->assertSee('Produk');
         $this->assertSame(250000, $transaction->total);
         $this->assertSame(125000, $transaction->items->first()->unit_price);
-        $this->assertSame(6, $product->fresh()->stock);
+        $this->assertSame(6, $product->fresh()->stok);
         $this->assertDatabaseHas('stock_movements', [
             'product_id' => $product->id,
             'type' => 'keluar',

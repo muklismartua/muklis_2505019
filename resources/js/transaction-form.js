@@ -2,6 +2,10 @@ const form = document.querySelector('#transaction-form');
 
 if (form) {
     const typeInput = form.querySelector('#type');
+    const supplierField = form.querySelector('#supplier-field');
+    const supplierInput = form.querySelector('#supplier_id');
+    const customerField = form.querySelector('#customer-field');
+    const customerInput = form.querySelector('#customer_id');
     const rows = form.querySelector('#item-rows');
     const template = document.querySelector('#item-row-template');
     const formatter = new Intl.NumberFormat('id-ID');
@@ -9,6 +13,12 @@ if (form) {
     const rupiah = (amount) => `Rp ${formatter.format(amount)}`;
 
     const updateTotals = () => {
+        const isPurchase = typeInput.value === 'pembelian';
+        supplierField?.classList.toggle('hidden', !isPurchase);
+        supplierInput.disabled = !isPurchase;
+        customerField?.classList.toggle('hidden', isPurchase);
+        customerInput.disabled = isPurchase;
+
         let total = 0;
 
         rows.querySelectorAll('.item-row').forEach((row) => {

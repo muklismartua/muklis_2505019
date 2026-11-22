@@ -33,9 +33,9 @@ class InventoryTransactionService
             }
 
             foreach ($products as $product) {
-                if (! $product->is_active) {
+                if (! $product->aktif) {
                     throw ValidationException::withMessages([
-                        'items' => "Produk {$product->name} sedang tidak aktif.",
+                        'items' => "Produk {$product->nama} sedang tidak aktif.",
                     ]);
                 }
             }
@@ -47,6 +47,8 @@ class InventoryTransactionService
                 'total' => 0,
                 'notes' => $data['notes'] ?? null,
                 'user_id' => $user?->id,
+                'supplier_id' => $data['supplier_id'] ?? null,
+                'customer_id' => $data['customer_id'] ?? null,
             ]);
 
             $total = 0;
@@ -55,13 +57,13 @@ class InventoryTransactionService
                 $product = $products->get((int) $line['product_id']);
                 $quantity = (int) $line['quantity'];
                 $unitPrice = $data['type'] === InventoryTransaction::TYPE_SALE
-                    ? $product->selling_price
-                    : $product->purchase_price;
+                    ? $product->harga_jual
+                    : $product->harga_beli;
                 $subtotal = $unitPrice * $quantity;
 
                 $item = $transaction->items()->create([
                     'product_id' => $product->id,
-                    'product_name' => $product->name,
+                    'product_name' => $product->nama,
                     'product_sku' => $product->sku,
                     'quantity' => $quantity,
                     'unit_price' => $unitPrice,

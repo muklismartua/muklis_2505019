@@ -36,5 +36,7 @@ class DatabaseSeeder extends Seeder
             $user->forceFill(['email_verified_at' => now()])->save();
             $user->syncRoles($account['role']);
         }
+
+        $this->call(MasterDataSeeder::class);
     }
 }

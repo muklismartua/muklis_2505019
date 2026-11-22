@@ -16,7 +16,7 @@ class StockService
         InventoryTransactionItem $item,
     ): StockMovement {
         $product = Product::query()->lockForUpdate()->findOrFail($item->product_id);
-        $stockBefore = $product->stock;
+        $stockBefore = $product->stok;
 
         [$stockAfter, $movementType] = match ($transaction->type) {
             InventoryTransaction::TYPE_SALE => $this->decreaseStock($product, $stockBefore, $item->quantity),
@@ -24,7 +24,7 @@ class StockService
             default => throw new InvalidArgumentException('Jenis transaksi stok tidak valid.'),
         };
 
-        $product->stock = $stockAfter;
+        $product->stok = $stockAfter;
         $product->save();
 
         return StockMovement::query()->create([
@@ -45,7 +45,7 @@ class StockService
     {
         if ($stockBefore < $quantity) {
             throw ValidationException::withMessages([
-                'items' => "Stok {$product->name} tidak mencukupi. Stok tersedia: {$stockBefore}.",
+                'items' => "Stok {$product->nama} tidak mencukupi. Stok tersedia: {$stockBefore}.",
             ]);
         }
 

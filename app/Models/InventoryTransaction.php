@@ -19,6 +19,8 @@ class InventoryTransaction extends Model
         'total',
         'notes',
         'user_id',
+        'supplier_id',
+        'customer_id',
     ];
 
     protected function casts(): array
@@ -37,5 +39,15 @@ class InventoryTransaction extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function supplier(): BelongsTo
+    {
+        return $this->belongsTo(Supplier::class);
+    }
+
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

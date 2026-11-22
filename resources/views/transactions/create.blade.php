@@ -33,6 +33,26 @@
                 <label for="transaction_date" class="mb-1 block text-sm font-medium">Tanggal transaksi</label>
                 <input id="transaction_date" name="transaction_date" type="date" required value="{{ old('transaction_date', now()->toDateString()) }}" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
             </div>
+            <div id="supplier-field" class="hidden">
+                <label for="supplier_id" class="mb-1 block text-sm font-medium">Supplier <span class="font-normal text-slate-500">(opsional)</span></label>
+                <select id="supplier_id" name="supplier_id" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">Pilih supplier</option>
+                    @foreach ($suppliers as $id => $name)
+                        <option value="{{ $id }}" @selected((string) old('supplier_id') === (string) $id)>{{ $name }}</option>
+                    @endforeach
+                </select>
+                @error('supplier_id')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
+            </div>
+            <div id="customer-field" class="hidden">
+                <label for="customer_id" class="mb-1 block text-sm font-medium">Pelanggan <span class="font-normal text-slate-500">(opsional)</span></label>
+                <select id="customer_id" name="customer_id" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                    <option value="">Pilih pelanggan</option>
+                    @foreach ($customers as $id => $name)
+                        <option value="{{ $id }}" @selected((string) old('customer_id') === (string) $id)>{{ $name }}</option>
+                    @endforeach
+                </select>
+                @error('customer_id')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
+            </div>
             <div class="sm:col-span-2">
                 <label for="notes" class="mb-1 block text-sm font-medium">Catatan <span class="font-normal text-slate-500">(opsional)</span></label>
                 <textarea id="notes" name="notes" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('notes') }}</textarea>
@@ -62,10 +82,10 @@
                                         <option value="">Pilih produk</option>
                                         @foreach ($products as $product)
                                             <option value="{{ $product->id }}"
-                                                data-sale-price="{{ $product->selling_price }}"
-                                                data-purchase-price="{{ $product->purchase_price }}"
+                                                data-sale-price="{{ $product->harga_jual }}"
+                                                data-purchase-price="{{ $product->harga_beli }}"
                                                 @selected((string) ($oldItem['product_id'] ?? '') === (string) $product->id)>
-                                                {{ $product->name }} ({{ $product->sku }}) — stok {{ $product->stock }}
+                                                {{ $product->nama }} ({{ $product->sku }}) — stok {{ $product->stok }}
                                             </option>
                                         @endforeach
                                     </select>
@@ -104,8 +124,8 @@
                 <select required class="product-select w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                     <option value="">Pilih produk</option>
                     @foreach ($products as $product)
-                        <option value="{{ $product->id }}" data-sale-price="{{ $product->selling_price }}" data-purchase-price="{{ $product->purchase_price }}">
-                            {{ $product->name }} ({{ $product->sku }}) — stok {{ $product->stock }}
+                        <option value="{{ $product->id }}" data-sale-price="{{ $product->harga_jual }}" data-purchase-price="{{ $product->harga_beli }}">
+                            {{ $product->nama }} ({{ $product->sku }}) — stok {{ $product->stok }}
                         </option>
                     @endforeach
                 </select>

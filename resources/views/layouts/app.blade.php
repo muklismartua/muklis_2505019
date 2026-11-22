@@ -68,19 +68,19 @@
                             </button>
                             <div x-show="masterOpen" x-transition class="space-y-1 pl-3">
                                 @canany(['kategori.lihat', 'kategori.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Kategori</span>
+                                    <a href="{{ route('categories.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('categories.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('categories.*')])>Kategori</a>
                                 @endcanany
                                 @canany(['satuan.lihat', 'satuan.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Satuan</span>
+                                    <a href="{{ route('units.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('units.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('units.*')])>Satuan</a>
                                 @endcanany
                                 @canany(['produk.lihat', 'produk.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Produk</span>
+                                    <a href="{{ route('products.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('products.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('products.*')])>Produk</a>
                                 @endcanany
                                 @canany(['pemasok.lihat', 'pemasok.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Supplier</span>
+                                    <a href="{{ route('suppliers.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('suppliers.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('suppliers.*')])>Supplier</a>
                                 @endcanany
                                 @canany(['pelanggan.lihat', 'pelanggan.kelola'])
-                                    <span class="block cursor-not-allowed rounded-md px-3 py-2 text-slate-400" aria-disabled="true" title="Modul belum tersedia">Pelanggan</span>
+                                    <a href="{{ route('customers.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('customers.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('customers.*')])>Pelanggan</a>
                                 @endcanany
                             </div>
                         </div>

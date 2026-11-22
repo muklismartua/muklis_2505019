@@ -29,6 +29,8 @@ class StoreInventoryTransactionRequest extends FormRequest
             ])],
             'transaction_date' => ['required', 'date'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id', 'prohibited_unless:type,pembelian'],
+            'customer_id' => ['nullable', 'integer', 'exists:customers,id', 'prohibited_unless:type,penjualan'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:1000000'],

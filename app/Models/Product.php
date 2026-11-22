@@ -2,28 +2,49 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Product extends Model
 {
+    use HasFactory;
+    use SoftDeletes;
+
     protected $fillable = [
         'sku',
-        'name',
-        'selling_price',
-        'purchase_price',
-        'stock',
-        'is_active',
+        'nama',
+        'category_id',
+        'unit_id',
+        'harga_beli',
+        'harga_jual',
+        'stok',
+        'stok_minimum',
+        'foto',
+        'aktif',
     ];
 
     protected function casts(): array
     {
         return [
-            'selling_price' => 'integer',
-            'purchase_price' => 'integer',
-            'stock' => 'integer',
-            'is_active' => 'boolean',
+            'harga_jual' => 'integer',
+            'harga_beli' => 'integer',
+            'stok' => 'integer',
+            'stok_minimum' => 'integer',
+            'aktif' => 'boolean',
         ];
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function transactionItems(): HasMany

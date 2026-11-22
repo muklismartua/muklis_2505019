@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreInventoryTransactionRequest;
+use App\Models\Customer;
 use App\Models\InventoryTransaction;
 use App\Models\Product;
+use App\Models\Supplier;
 use App\Services\InventoryTransactionService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -43,15 +45,19 @@ class InventoryTransactionController extends Controller
     public function create(Request $request): View
     {
         $products = Product::query()
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'sku', 'name', 'selling_price', 'purchase_price', 'stock']);
+            ->where('aktif', true)
+            ->orderBy('nama')
+            ->get(['id', 'sku', 'nama', 'harga_jual', 'harga_beli', 'stok']);
+        $suppliers = Supplier::query()->orderBy('nama')->pluck('nama', 'id');
+        $customers = Customer::query()->orderBy('nama')->pluck('nama', 'id');
         $canCreateSales = $request->user()->can('penjualan.kelola');
         $canCreatePurchases = $request->user()->can('pembelian.kelola');
         $defaultType = $canCreateSales ? InventoryTransaction::TYPE_SALE : InventoryTransaction::TYPE_PURCHASE;
 
         return view('transactions.create', compact(
             'products',
+            'suppliers',
+            'customers',
             'canCreateSales',
             'canCreatePurchases',
             'defaultType',
@@ -77,7 +83,7 @@ class InventoryTransactionController extends Controller
 
         abort_unless($request->user()->can($permission), 403);
 
-        $transaction->load(['items', 'user']);
+        $transaction->load(['items', 'user', 'supplier', 'customer']);
 
         return view('transactions.show', compact('transaction'));
     }
