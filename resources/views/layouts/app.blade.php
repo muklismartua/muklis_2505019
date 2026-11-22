@@ -118,7 +118,7 @@
                             </button>
                             <div x-show="transactionsOpen" x-transition class="space-y-1 pl-3">
                                 @canany(['pembelian.lihat', 'pembelian.kelola'])
-                                    <a href="{{ route('transactions.index', ['type' => 'pembelian']) }}" @click="sidebarOpen = false" class="block rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">Pembelian</a>
+                                    <a href="{{ route('purchases.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('purchases.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('purchases.*')])>Pembelian</a>
                                 @endcanany
                                 @canany(['penjualan.lihat', 'penjualan.kelola'])
                                     <a href="{{ route('transactions.index', ['type' => 'penjualan']) }}" @click="sidebarOpen = false" class="block rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">Penjualan</a>

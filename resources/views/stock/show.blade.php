@@ -39,7 +39,7 @@
                 <td class="whitespace-nowrap px-5 py-4 text-right">{{ number_format($movement->stok_sesudah, 0, ',', '.') }}</td>
                 <td class="max-w-48 px-5 py-4">
                     @if ($movement->referensi)
-                        {{ $movement->referensi->transaction_number ?? (class_basename($movement->referensi_type).' #'.$movement->referensi_id) }}
+                        {{ $movement->referensi->nomor ?? $movement->referensi->transaction_number ?? (class_basename($movement->referensi_type).' #'.$movement->referensi_id) }}
                     @else
                         —
                     @endif

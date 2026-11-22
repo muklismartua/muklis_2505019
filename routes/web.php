@@ -7,6 +7,7 @@ use App\Http\Controllers\MasterData\ProductController;
 use App\Http\Controllers\MasterData\SupplierController;
 use App\Http\Controllers\MasterData\UnitController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\UserManagementController;
@@ -51,6 +52,22 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/stock-adjustments', [StockAdjustmentController::class, 'store'])
         ->middleware('permission:stok.kelola')
         ->name('stock-adjustments.store');
+
+    Route::get('/purchases', [PurchaseController::class, 'index'])
+        ->middleware('permission:pembelian.lihat|pembelian.kelola')
+        ->name('purchases.index');
+    Route::get('/purchases/create', [PurchaseController::class, 'create'])
+        ->middleware('permission:pembelian.kelola')
+        ->name('purchases.create');
+    Route::post('/purchases', [PurchaseController::class, 'store'])
+        ->middleware('permission:pembelian.kelola')
+        ->name('purchases.store');
+    Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])
+        ->middleware('permission:pembelian.lihat|pembelian.kelola')
+        ->name('purchases.show');
+    Route::patch('/purchases/{purchase}/cancel', [PurchaseController::class, 'cancel'])
+        ->middleware('permission:pembelian.kelola')
+        ->name('purchases.cancel');
 
     Route::get('/transactions', [InventoryTransactionController::class, 'index'])
         ->middleware('permission:penjualan.lihat|pembelian.lihat')

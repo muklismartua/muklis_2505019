@@ -24,7 +24,7 @@ class StockService
         $this->validatePositiveQuantity($qty);
 
         return DB::transaction(function () use ($product, $qty, $referensi, $keterangan, $user): StockMovement {
-            $lockedProduct = Product::query()->lockForUpdate()->findOrFail($product->id);
+            $lockedProduct = Product::query()->withTrashed()->lockForUpdate()->findOrFail($product->id);
             $stockBefore = $lockedProduct->stok;
             $lockedProduct->stok = $stockBefore + $qty;
             $lockedProduct->save();
@@ -52,7 +52,7 @@ class StockService
         $this->validatePositiveQuantity($qty);
 
         return DB::transaction(function () use ($product, $qty, $referensi, $keterangan, $user): StockMovement {
-            $lockedProduct = Product::query()->lockForUpdate()->findOrFail($product->id);
+            $lockedProduct = Product::query()->withTrashed()->lockForUpdate()->findOrFail($product->id);
             $stockBefore = $lockedProduct->stok;
 
             if ($stockBefore < $qty) {
@@ -97,7 +97,7 @@ class StockService
         }
 
         return DB::transaction(function () use ($product, $qtyFisik, $reason, $user): StockMovement {
-            $lockedProduct = Product::query()->lockForUpdate()->findOrFail($product->id);
+            $lockedProduct = Product::query()->withTrashed()->lockForUpdate()->findOrFail($product->id);
             $stockBefore = $lockedProduct->stok;
             $difference = $qtyFisik - $stockBefore;
 

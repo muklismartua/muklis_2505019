@@ -21,4 +21,6 @@ Modul kategori, satuan, supplier, pelanggan, dan produk menggunakan permission d
 
 Perubahan stok harus menggunakan `App\Services\StockService`. Riwayat tercatat di kartu stok; stok opname mencatat jumlah sistem, jumlah fisik, selisih, alasan, dan pengguna. Produk dengan stok sama dengan atau di bawah stok minimum tampil pada daftar stok menipis.
 
+Modul pembelian membuat nomor harian `PB-YYYYMMDD-####`, mencatat item dan diskon, serta menambah stok melalui `StockService`. Pembatalan pembelian memeriksa stok tersedia sebelum mengurangi kembali stok.
+
 Jalankan tes dengan `php artisan test`.
