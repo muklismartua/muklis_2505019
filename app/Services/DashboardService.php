@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Piutang;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\Sale;
@@ -20,6 +21,7 @@ class DashboardService
         $canViewSales = $hasFullAccess || $user->can('penjualan.lihat');
         $canViewPurchases = $hasFullAccess || $user->can('pembelian.lihat');
         $canViewStock = $hasFullAccess || $user->can('stok.lihat');
+        $canViewReceivables = $hasFullAccess || $user->canAny(['piutang.lihat', 'piutang.kelola']);
         $salesUserId = $isCashier ? $user->id : null;
         $today = Carbon::today();
         $todayStart = $today->toDateString();
@@ -33,6 +35,12 @@ class DashboardService
                 ->whereDate('tanggal', '>=', $monthStart)
                 ->whereDate('tanggal', '<=', $todayStart)
                 ->sum('total')
+            : null;
+        $cashReceivedToday = $canViewSales
+            ? $this->cashReceivedBetween($today, $today, $salesUserId)
+            : null;
+        $cashReceivedThisMonth = $canViewSales
+            ? $this->cashReceivedBetween($today->copy()->startOfMonth(), $today, $salesUserId)
             : null;
 
         $transactionCount = 0;
@@ -53,21 +61,37 @@ class DashboardService
         $trend = $canViewSales
             ? $this->salesTrend($salesUserId, $days, $today)
             : ['labels' => [], 'values' => []];
+        $receivableQuery = Piutang::query()
+            ->where('status', Piutang::STATUS_UNPAID)
+            ->when($salesUserId, fn (Builder $query, int $id) => $query->whereHas(
+                'sale',
+                fn (Builder $saleQuery) => $saleQuery->where('user_id', $id),
+            ));
+        $overdueQuery = (clone $receivableQuery)
+            ->whereNotNull('jatuh_tempo')
+            ->whereDate('jatuh_tempo', '<', $todayStart);
 
         return [
             'stats' => [
                 'sales_today' => $salesToday,
                 'sales_this_month' => $salesThisMonth,
+                'cash_received_today' => $cashReceivedToday,
+                'cash_received_this_month' => $cashReceivedThisMonth,
                 'transactions_today' => $transactionCount,
                 'low_stock' => $canViewStock
                     ? Product::query()->where('aktif', true)->whereColumn('stok', '<=', 'stok_minimum')->count()
                     : null,
+                'active_receivables' => $canViewReceivables ? (int) $receivableQuery->sum('sisa') : null,
+                'overdue_receivable_count' => $canViewReceivables ? (clone $overdueQuery)->count() : null,
+                'overdue_receivable_total' => $canViewReceivables ? (int) $overdueQuery->sum('sisa') : null,
             ],
             'trend' => $trend,
             'days' => $days,
             'can_view_sales' => $canViewSales,
+            'can_view_receivables' => $canViewReceivables,
             'can_open_stock' => $user->can('stok.lihat'),
             'top_products' => $canViewSales ? $this->topProducts($salesUserId, $today) : collect(),
+            'top_debtors' => $canViewReceivables ? $this->topDebtors($salesUserId) : collect(),
             'recent_transactions' => $this->recentTransactions(
                 $salesUserId,
                 $canViewSales,
@@ -81,6 +105,44 @@ class DashboardService
         return Sale::query()
             ->where('status', Sale::STATUS_COMPLETED)
             ->when($userId, fn (Builder $query, int $id) => $query->where('user_id', $id));
+    }
+
+    private function cashReceivedBetween(Carbon $start, Carbon $end, ?int $userId): int
+    {
+        $saleReceipts = Sale::query()
+            ->where('status', Sale::STATUS_COMPLETED)
+            ->whereDate('tanggal', '>=', $start->toDateString())
+            ->whereDate('tanggal', '<=', $end->toDateString())
+            ->when($userId, fn (Builder $query, int $id) => $query->where('user_id', $id))
+            ->selectRaw('COALESCE(SUM(CASE WHEN bayar < total THEN bayar ELSE total END), 0) AS total')
+            ->value('total');
+
+        $installmentReceipts = DB::table('piutang_payments')
+            ->join('piutangs', 'piutangs.id', '=', 'piutang_payments.piutang_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->where('sales.status', Sale::STATUS_COMPLETED)
+            ->whereDate('piutang_payments.tanggal', '>=', $start->toDateString())
+            ->whereDate('piutang_payments.tanggal', '<=', $end->toDateString())
+            ->when($userId, fn ($query, int $id) => $query->where('sales.user_id', $id))
+            ->sum('piutang_payments.jumlah');
+
+        return (int) $saleReceipts + (int) $installmentReceipts;
+    }
+
+    private function topDebtors(?int $salesUserId): Collection
+    {
+        return DB::table('piutangs')
+            ->join('customers', 'customers.id', '=', 'piutangs.customer_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->where('piutangs.status', Piutang::STATUS_UNPAID)
+            ->when($salesUserId, fn ($query, int $id) => $query->where('sales.user_id', $id))
+            ->select('customers.id', 'customers.nama')
+            ->selectRaw('SUM(piutangs.sisa) AS total_hutang')
+            ->groupBy('customers.id', 'customers.nama')
+            ->orderByDesc('total_hutang')
+            ->orderBy('customers.nama')
+            ->limit(5)
+            ->get();
     }
 
     private function salesTrend(?int $userId, int $days, Carbon $today): array

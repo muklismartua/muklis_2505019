@@ -81,6 +81,11 @@ class ReportController extends Controller
             : collect();
         $stockValueTotal = $report === 'stok-saat-ini' ? $reportService->stockValueTotal() : null;
         $reports = $reportService->definitions();
+        $statuses = [
+            'belum_lunas' => 'Belum lunas',
+            'lunas' => 'Lunas',
+            'batal' => 'Batal',
+        ];
 
         return view('reports.index', compact(
             'definition',
@@ -92,6 +97,7 @@ class ReportController extends Controller
             'stockValueTotal',
             'reports',
             'report',
+            'statuses',
         ));
     }
 }

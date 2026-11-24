@@ -4,8 +4,8 @@ namespace App\Services;
 
 use Carbon\Carbon;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Database\Query\Builder;
+use Illuminate\Pagination\LengthAwarePaginator as Paginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -19,7 +19,8 @@ class ReportService
             'columns' => [
                 ['key' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date'],
                 ['key' => 'transaksi', 'label' => 'Transaksi', 'type' => 'number'],
-                ['key' => 'penjualan', 'label' => 'Penjualan', 'type' => 'money'],
+                ['key' => 'penjualan', 'label' => 'Total Penjualan', 'type' => 'money'],
+                ['key' => 'diterima', 'label' => 'Total Diterima (kas masuk)', 'type' => 'money'],
                 ['key' => 'diskon', 'label' => 'Diskon', 'type' => 'money'],
                 ['key' => 'pajak', 'label' => 'Pajak', 'type' => 'money'],
             ],
@@ -32,7 +33,8 @@ class ReportService
                 ['key' => 'sku', 'label' => 'SKU', 'type' => 'text'],
                 ['key' => 'produk', 'label' => 'Produk', 'type' => 'text'],
                 ['key' => 'qty', 'label' => 'Qty Terjual', 'type' => 'number'],
-                ['key' => 'penjualan', 'label' => 'Subtotal Item', 'type' => 'money'],
+                ['key' => 'penjualan', 'label' => 'Total Penjualan', 'type' => 'money'],
+                ['key' => 'diterima', 'label' => 'Total Diterima (kas masuk)', 'type' => 'money'],
             ],
         ],
         'penjualan-pelanggan' => [
@@ -42,7 +44,8 @@ class ReportService
             'columns' => [
                 ['key' => 'pelanggan', 'label' => 'Pelanggan', 'type' => 'text'],
                 ['key' => 'transaksi', 'label' => 'Transaksi', 'type' => 'number'],
-                ['key' => 'penjualan', 'label' => 'Penjualan', 'type' => 'money'],
+                ['key' => 'penjualan', 'label' => 'Total Penjualan', 'type' => 'money'],
+                ['key' => 'diterima', 'label' => 'Total Diterima (kas masuk)', 'type' => 'money'],
             ],
         ],
         'pembelian-tanggal' => [
@@ -106,6 +109,48 @@ class ReportService
                 ['key' => 'laba', 'label' => 'Laba/Rugi', 'type' => 'money'],
             ],
         ],
+        'piutang-pelanggan' => [
+            'title' => 'Laporan Piutang',
+            'description' => 'Daftar piutang menurut pelanggan, status, dan rentang tanggal jatuh tempo.',
+            'filters' => ['pelanggan' => true, 'status' => true, 'rentang_jatuh_tempo' => true],
+            'columns' => [
+                ['key' => 'nomor', 'label' => 'Nomor Penjualan', 'type' => 'text'],
+                ['key' => 'pelanggan', 'label' => 'Pelanggan', 'type' => 'text'],
+                ['key' => 'tanggal', 'label' => 'Tanggal Penjualan', 'type' => 'date'],
+                ['key' => 'jatuh_tempo', 'label' => 'Jatuh Tempo', 'type' => 'date'],
+                ['key' => 'status', 'label' => 'Status Piutang', 'type' => 'text'],
+                ['key' => 'total', 'label' => 'Total Tagihan', 'type' => 'money'],
+                ['key' => 'terbayar', 'label' => 'Terbayar', 'type' => 'money'],
+                ['key' => 'sisa', 'label' => 'Sisa', 'type' => 'money'],
+            ],
+        ],
+        'piutang-aging' => [
+            'title' => 'Umur Piutang (Aging)',
+            'description' => 'Sisa piutang belum lunas dikelompokkan berdasarkan jumlah hari setelah jatuh tempo.',
+            'filters' => ['pelanggan' => true],
+            'columns' => [
+                ['key' => 'pelanggan', 'label' => 'Pelanggan', 'type' => 'text'],
+                ['key' => 'hari_0_30', 'label' => '0–30 Hari', 'type' => 'money'],
+                ['key' => 'hari_31_60', 'label' => '31–60 Hari', 'type' => 'money'],
+                ['key' => 'hari_61_90', 'label' => '61–90 Hari', 'type' => 'money'],
+                ['key' => 'hari_lebih_90', 'label' => '>90 Hari', 'type' => 'money'],
+                ['key' => 'total', 'label' => 'Total Piutang', 'type' => 'money'],
+            ],
+        ],
+        'riwayat-pembayaran-piutang' => [
+            'title' => 'Riwayat Pembayaran Piutang',
+            'description' => 'Pembayaran dan cicilan piutang yang diterima pada periode yang dipilih.',
+            'filters' => ['periode' => true, 'pelanggan' => true],
+            'columns' => [
+                ['key' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date'],
+                ['key' => 'nomor_pembayaran', 'label' => 'Nomor Pembayaran', 'type' => 'text'],
+                ['key' => 'nomor_penjualan', 'label' => 'Nomor Penjualan', 'type' => 'text'],
+                ['key' => 'pelanggan', 'label' => 'Pelanggan', 'type' => 'text'],
+                ['key' => 'jumlah', 'label' => 'Jumlah Diterima', 'type' => 'money'],
+                ['key' => 'metode', 'label' => 'Metode', 'type' => 'text'],
+                ['key' => 'pengguna', 'label' => 'Dicatat oleh', 'type' => 'text'],
+            ],
+        ],
     ];
 
     public function supports(string $report): bool
@@ -141,6 +186,8 @@ class ReportService
             ...$filters,
             'dari' => Carbon::parse($filters['dari'] ?? $today->copy()->startOfMonth())->toDateString(),
             'sampai' => Carbon::parse($filters['sampai'] ?? $today)->toDateString(),
+            'jatuh_dari' => isset($filters['jatuh_dari']) ? Carbon::parse($filters['jatuh_dari'])->toDateString() : null,
+            'jatuh_sampai' => isset($filters['jatuh_sampai']) ? Carbon::parse($filters['jatuh_sampai'])->toDateString() : null,
         ];
     }
 
@@ -154,16 +201,26 @@ class ReportService
 
             return $paginate ? $this->paginateCollection($rows) : $rows;
         }
+        if (in_array($report, ['penjualan-tanggal', 'penjualan-produk', 'penjualan-pelanggan', 'piutang-aging'], true)) {
+            $rows = match ($report) {
+                'penjualan-tanggal' => $this->salesByDate($filters),
+                'penjualan-produk' => $this->salesByProduct($filters),
+                'penjualan-pelanggan' => $this->salesByCustomer($filters),
+                'piutang-aging' => $this->receivableAgingRows($filters),
+            };
+
+            return $paginate ? $this->paginateCollection($rows) : $rows;
+        }
 
         $query = match ($report) {
-            'penjualan-tanggal' => $this->salesByDate($filters),
-            'penjualan-produk' => $this->salesByProduct($filters),
-            'penjualan-pelanggan' => $this->salesByCustomer($filters),
             'pembelian-tanggal' => $this->purchasesByDate($filters),
             'pembelian-supplier' => $this->purchasesBySupplier($filters),
             'stok-saat-ini' => $this->currentStock(),
             'mutasi-stok' => $this->stockMovements($filters),
+            'piutang-pelanggan' => $this->receivables($filters),
+            'riwayat-pembayaran-piutang' => $this->receivablePayments($filters),
             'laba-rugi' => throw new \LogicException('Laporan laba rugi menggunakan agregasi per tanggal.'),
+            'penjualan-tanggal', 'penjualan-produk', 'penjualan-pelanggan', 'piutang-aging' => throw new \LogicException('Laporan ini menggunakan agregasi khusus.'),
         };
 
         $result = $paginate ? $query->paginate(30)->withQueryString() : $query->get();
@@ -177,50 +234,290 @@ class ReportService
         return $result->map(fn ($row) => $this->formatRow($report, $row));
     }
 
-    private function salesByDate(array $filters): Builder
+    private function salesByDate(array $filters): Collection
     {
-        $query = DB::table('sales')
+        $sales = DB::table('sales')
             ->where('status', 'selesai')
             ->select('tanggal')
             ->selectRaw('COUNT(id) AS transaksi')
             ->selectRaw('SUM(total) AS penjualan')
             ->selectRaw('SUM(diskon) AS diskon')
             ->selectRaw('SUM(pajak) AS pajak');
-
-        return $this->applyDateRange($query, 'tanggal', $filters)
+        $sales = $this->applyDateRange($sales, 'tanggal', $filters)
             ->groupBy('tanggal')
-            ->orderBy('tanggal');
+            ->get()
+            ->keyBy('tanggal');
+        $receipts = $this->cashReceiptsByDate($filters);
+
+        return $sales->keys()
+            ->merge($receipts->keys())
+            ->unique()
+            ->sort()
+            ->map(fn (string $date): array => [
+                'tanggal' => $date,
+                'transaksi' => (int) ($sales->get($date)->transaksi ?? 0),
+                'penjualan' => (int) ($sales->get($date)->penjualan ?? 0),
+                'diterima' => (int) ($receipts->get($date) ?? 0),
+                'diskon' => (int) ($sales->get($date)->diskon ?? 0),
+                'pajak' => (int) ($sales->get($date)->pajak ?? 0),
+            ])
+            ->values();
     }
 
-    private function salesByProduct(array $filters): Builder
+    private function salesByProduct(array $filters): Collection
     {
-        $query = DB::table('sale_items')
+        $items = DB::table('sale_items')
             ->join('sales', 'sales.id', '=', 'sale_items.sale_id')
             ->join('products', 'products.id', '=', 'sale_items.product_id')
             ->where('sales.status', 'selesai')
-            ->when($filters['product_id'] ?? null, fn (Builder $builder, $id) => $builder->where('products.id', $id))
-            ->select('products.sku', 'products.nama AS produk')
-            ->selectRaw('SUM(sale_items.qty) AS qty')
-            ->selectRaw('SUM(sale_items.subtotal) AS penjualan');
+            ->select(
+                'sales.id as sale_id',
+                'sales.bayar',
+                'sales.total as sale_total',
+                'products.id as product_id',
+                'products.sku',
+                'products.nama as produk',
+                'sale_items.qty',
+                'sale_items.subtotal',
+            );
+        $items = $this->applyDateRange($items, 'sales.tanggal', $filters)
+            ->orderBy('sales.id')
+            ->orderBy('products.id')
+            ->get();
+        $saleIds = $items->pluck('sale_id')->unique()->values();
+        if ($saleIds->isEmpty()) {
+            return collect();
+        }
 
-        return $this->applyDateRange($query, 'sales.tanggal', $filters)
-            ->groupBy('products.id', 'products.sku', 'products.nama')
-            ->orderBy('products.nama');
+        $paymentsBySale = DB::table('piutang_payments')
+            ->join('piutangs', 'piutangs.id', '=', 'piutang_payments.piutang_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->where('sales.status', 'selesai')
+            ->whereIn('sales.id', $saleIds)
+            ->select('sales.id as sale_id')
+            ->selectRaw('SUM(piutang_payments.jumlah) AS diterima');
+        $paymentsBySale = $this->applyDateRange($paymentsBySale, 'piutang_payments.tanggal', $filters)
+            ->groupBy('sales.id')
+            ->get()
+            ->keyBy('sale_id');
+        $rows = [];
+
+        foreach ($items->groupBy('sale_id') as $saleItems) {
+            $firstItem = $saleItems->first();
+            $saleLines = $saleItems->values();
+            $itemValueTotal = (int) $saleLines->sum('subtotal');
+            $lastValueIndex = $saleLines
+                ->filter(fn ($item) => (int) $item->subtotal > 0)
+                ->keys()
+                ->last();
+            $cashReceived = min(
+                (int) $firstItem->sale_total,
+                min((int) $firstItem->bayar, (int) $firstItem->sale_total)
+                    + (int) ($paymentsBySale->get($firstItem->sale_id)->diterima ?? 0),
+            );
+            $cashRemaining = $cashReceived;
+
+            foreach ($saleLines as $index => $item) {
+                $received = $itemValueTotal <= 0
+                    ? ($index === $saleLines->count() - 1 ? $cashRemaining : 0)
+                    : ((int) $item->subtotal <= 0
+                        ? 0
+                        : ($index === $lastValueIndex
+                            ? $cashRemaining
+                            : min($cashRemaining, (int) round($cashReceived * ((int) $item->subtotal / $itemValueTotal)))));
+                $cashRemaining -= $received;
+
+                if (isset($filters['product_id']) && (int) $filters['product_id'] !== (int) $item->product_id) {
+                    continue;
+                }
+
+                $rows[$item->product_id] ??= [
+                    'sku' => $item->sku,
+                    'produk' => $item->produk,
+                    'qty' => 0,
+                    'penjualan' => 0,
+                    'diterima' => 0,
+                ];
+                $rows[$item->product_id]['qty'] += (int) $item->qty;
+                $rows[$item->product_id]['penjualan'] += (int) $item->subtotal;
+                $rows[$item->product_id]['diterima'] += $received;
+            }
+        }
+
+        return collect($rows)->sortBy('produk')->values();
     }
 
-    private function salesByCustomer(array $filters): Builder
+    private function salesByCustomer(array $filters): Collection
     {
-        $query = DB::table('sales')
+        $sales = DB::table('sales')
             ->leftJoin('customers', 'customers.id', '=', 'sales.customer_id')
             ->where('sales.status', 'selesai')
             ->when($filters['customer_id'] ?? null, fn (Builder $builder, $id) => $builder->where('sales.customer_id', $id))
+            ->select('sales.customer_id')
             ->selectRaw("COALESCE(customers.nama, 'Pelanggan umum') AS pelanggan")
             ->selectRaw('COUNT(sales.id) AS transaksi')
-            ->selectRaw('SUM(sales.total) AS penjualan');
-
-        return $this->applyDateRange($query, 'sales.tanggal', $filters)
+            ->selectRaw('SUM(sales.total) AS penjualan')
+            ->selectRaw('SUM(CASE WHEN sales.bayar < sales.total THEN sales.bayar ELSE sales.total END) AS diterima');
+        $sales = $this->applyDateRange($sales, 'sales.tanggal', $filters)
             ->groupBy('sales.customer_id', 'customers.nama')
-            ->orderBy('pelanggan');
+            ->get();
+
+        $rows = $sales->mapWithKeys(fn ($row): array => [
+            (int) ($row->customer_id ?? 0) => [
+                'pelanggan' => $row->pelanggan,
+                'transaksi' => (int) $row->transaksi,
+                'penjualan' => (int) $row->penjualan,
+                'diterima' => (int) $row->diterima,
+            ],
+        ]);
+        $payments = DB::table('piutang_payments')
+            ->join('piutangs', 'piutangs.id', '=', 'piutang_payments.piutang_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->leftJoin('customers', 'customers.id', '=', 'sales.customer_id')
+            ->where('sales.status', 'selesai')
+            ->when($filters['customer_id'] ?? null, fn (Builder $builder, $id) => $builder->where('sales.customer_id', $id))
+            ->select('sales.customer_id')
+            ->selectRaw("COALESCE(customers.nama, 'Pelanggan umum') AS pelanggan")
+            ->selectRaw('SUM(piutang_payments.jumlah) AS diterima');
+        $payments = $this->applyDateRange($payments, 'piutang_payments.tanggal', $filters)
+            ->groupBy('sales.customer_id', 'customers.nama')
+            ->get();
+
+        foreach ($payments as $payment) {
+            $key = (int) ($payment->customer_id ?? 0);
+            $row = $rows->get($key, [
+                'pelanggan' => $payment->pelanggan,
+                'transaksi' => 0,
+                'penjualan' => 0,
+                'diterima' => 0,
+            ]);
+            $row['diterima'] += (int) $payment->diterima;
+            $rows->put($key, $row);
+        }
+
+        return $rows->sortBy('pelanggan')->values();
+    }
+
+    private function cashReceiptsByDate(array $filters): Collection
+    {
+        $salesReceipts = DB::table('sales')
+            ->where('status', 'selesai')
+            ->select('tanggal')
+            ->selectRaw('SUM(CASE WHEN bayar < total THEN bayar ELSE total END) AS diterima');
+        $salesReceipts = $this->applyDateRange($salesReceipts, 'tanggal', $filters)
+            ->groupBy('tanggal')
+            ->get()
+            ->mapWithKeys(fn ($row): array => [$row->tanggal => (int) $row->diterima]);
+
+        $paymentReceipts = DB::table('piutang_payments')
+            ->join('piutangs', 'piutangs.id', '=', 'piutang_payments.piutang_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->where('sales.status', 'selesai')
+            ->select('piutang_payments.tanggal')
+            ->selectRaw('SUM(piutang_payments.jumlah) AS diterima');
+        $paymentReceipts = $this->applyDateRange($paymentReceipts, 'piutang_payments.tanggal', $filters)
+            ->groupBy('piutang_payments.tanggal')
+            ->get()
+            ->mapWithKeys(fn ($row): array => [$row->tanggal => (int) $row->diterima]);
+
+        $receipts = $salesReceipts;
+        foreach ($paymentReceipts as $date => $amount) {
+            $receipts->put($date, (int) $receipts->get($date, 0) + $amount);
+        }
+
+        return $receipts;
+    }
+
+    private function receivables(array $filters): Builder
+    {
+        return DB::table('piutangs')
+            ->join('customers', 'customers.id', '=', 'piutangs.customer_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->when($filters['customer_id'] ?? null, fn (Builder $query, $id) => $query->where('piutangs.customer_id', $id))
+            ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('piutangs.status', $status))
+            ->when($filters['jatuh_dari'] ?? null, fn (Builder $query, $date) => $query->whereDate('piutangs.jatuh_tempo', '>=', $date))
+            ->when($filters['jatuh_sampai'] ?? null, fn (Builder $query, $date) => $query->whereDate('piutangs.jatuh_tempo', '<=', $date))
+            ->select(
+                'sales.nomor',
+                'customers.nama as pelanggan',
+                'sales.tanggal',
+                'piutangs.jatuh_tempo',
+                'piutangs.status',
+                'piutangs.total',
+                'piutangs.terbayar',
+                'piutangs.sisa',
+            )
+            ->orderBy('piutangs.jatuh_tempo')
+            ->orderBy('sales.nomor');
+    }
+
+    private function receivableAgingRows(array $filters): Collection
+    {
+        $today = Carbon::today();
+        $balances = DB::table('piutangs')
+            ->join('customers', 'customers.id', '=', 'piutangs.customer_id')
+            ->where('piutangs.status', 'belum_lunas')
+            ->where('piutangs.sisa', '>', 0)
+            ->whereNotNull('piutangs.jatuh_tempo')
+            ->when($filters['customer_id'] ?? null, fn (Builder $query, $id) => $query->where('customers.id', $id))
+            ->get([
+                'customers.id as customer_id',
+                'customers.nama as pelanggan',
+                'piutangs.jatuh_tempo',
+                'piutangs.sisa',
+            ]);
+        $rows = [];
+
+        foreach ($balances as $balance) {
+            $dueDate = Carbon::parse($balance->jatuh_tempo)->startOfDay();
+            if ($dueDate->gt($today)) {
+                continue;
+            }
+
+            $daysLate = (int) $dueDate->diffInDays($today);
+            $key = (int) $balance->customer_id;
+            $rows[$key] ??= [
+                'pelanggan' => $balance->pelanggan,
+                'hari_0_30' => 0,
+                'hari_31_60' => 0,
+                'hari_61_90' => 0,
+                'hari_lebih_90' => 0,
+                'total' => 0,
+            ];
+            $bucket = match (true) {
+                $daysLate <= 30 => 'hari_0_30',
+                $daysLate <= 60 => 'hari_31_60',
+                $daysLate <= 90 => 'hari_61_90',
+                default => 'hari_lebih_90',
+            };
+            $rows[$key][$bucket] += (int) $balance->sisa;
+            $rows[$key]['total'] += (int) $balance->sisa;
+        }
+
+        return collect($rows)->sortByDesc('total')->values();
+    }
+
+    private function receivablePayments(array $filters): Builder
+    {
+        $query = DB::table('piutang_payments')
+            ->join('piutangs', 'piutangs.id', '=', 'piutang_payments.piutang_id')
+            ->join('sales', 'sales.id', '=', 'piutangs.sale_id')
+            ->join('customers', 'customers.id', '=', 'piutangs.customer_id')
+            ->leftJoin('users', 'users.id', '=', 'piutang_payments.user_id')
+            ->when($filters['customer_id'] ?? null, fn (Builder $builder, $id) => $builder->where('piutangs.customer_id', $id))
+            ->select(
+                'piutang_payments.tanggal',
+                'piutang_payments.nomor as nomor_pembayaran',
+                'sales.nomor as nomor_penjualan',
+                'customers.nama as pelanggan',
+                'piutang_payments.jumlah',
+                'piutang_payments.metode',
+                'users.name as pengguna',
+            );
+
+        return $this->applyDateRange($query, 'piutang_payments.tanggal', $filters)
+            ->orderByDesc('piutang_payments.tanggal')
+            ->orderByDesc('piutang_payments.id');
     }
 
     private function purchasesByDate(array $filters): Builder

@@ -91,6 +91,7 @@
                         <th class="px-5 py-3">Metode</th>
                         <th class="px-5 py-3">Dicatat oleh</th>
                         <th class="px-5 py-3">Catatan</th>
+                        <th class="px-5 py-3">Bukti</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -102,9 +103,12 @@
                             <td class="whitespace-nowrap px-5 py-3">{{ ucfirst($payment->metode) }}</td>
                             <td class="whitespace-nowrap px-5 py-3">{{ $payment->user?->name ?? '—' }}</td>
                             <td class="px-5 py-3">{{ $payment->catatan ?: '—' }}</td>
+                            <td class="whitespace-nowrap px-5 py-3">
+                                <a href="{{ route('piutangs.payments.pdf', [$piutang, $payment]) }}" class="font-medium text-indigo-700 hover:underline">Unduh PDF</a>
+                            </td>
                         </tr>
                     @empty
-                        <tr><td colspan="6" class="px-5 py-8 text-center text-slate-500">Belum ada pembayaran cicilan.</td></tr>
+                        <tr><td colspan="7" class="px-5 py-8 text-center text-slate-500">Belum ada pembayaran cicilan.</td></tr>
                     @endforelse
                 </tbody>
             </table>

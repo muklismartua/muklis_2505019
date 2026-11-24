@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ActivityLog;
 use App\Models\Customer;
 use App\Models\Piutang;
 use App\Models\PiutangPayment;
@@ -10,6 +11,7 @@ use App\Models\Sale;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\PiutangService;
+use App\Services\StoreSettingsService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -59,6 +61,30 @@ class PiutangManagementTest extends TestCase
             'sisa' => 5000,
             'status' => 'sebagian',
         ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'aksi' => 'piutang.dibuat',
+            'subject_type' => Piutang::class,
+            'subject_id' => $piutang->id,
+        ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'aksi' => 'piutang.pembayaran_dicatat',
+            'subject_type' => PiutangPayment::class,
+            'subject_id' => $payment->id,
+        ]);
+        $this->get(route('piutangs.payments.pdf', [$piutang, $payment]))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf')
+            ->assertSee('%PDF-', false);
+
+        $sale->refresh()->load(['customer', 'items.product', 'piutang']);
+        $store = app(StoreSettingsService::class)->forDocument();
+        $isCancelled = false;
+        $invoiceHtml = view('pdf.sales.invoice', compact('sale', 'store', 'isCancelled'))->render();
+        $receiptHtml = view('pdf.sales.receipt', compact('sale', 'store', 'isCancelled'))->render();
+        $this->assertStringContainsString('DP / Uang Muka', $invoiceHtml);
+        $this->assertStringContainsString('BELUM LUNAS', $invoiceHtml);
+        $this->assertStringContainsString('Sisa hutang', $receiptHtml);
+        $this->assertStringContainsString($sale->jatuh_tempo->format('d/m/Y'), $receiptHtml);
         $this->assertSame(5000, app(PiutangService::class)->totalHutangPelanggan($customer));
         $this->get(route('piutangs.show', $piutang))
             ->assertOk()
@@ -261,6 +287,32 @@ class PiutangManagementTest extends TestCase
         $this->assertSame(6000, $piutang->fresh()->sisa);
         $this->assertSame(19, $product->fresh()->stok);
         $this->assertSame($movementCount, StockMovement::query()->count());
+    }
+
+    public function test_overdue_command_logs_each_unpaid_piutang_once_and_sidebar_shows_badge(): void
+    {
+        $customer = Customer::factory()->create();
+        $sale = $this->createTempoSale($customer, 7000);
+        $piutang = $sale->piutang()->firstOrFail();
+        $piutang->update(['jatuh_tempo' => today()->subDay()]);
+        $sale->update(['jatuh_tempo' => today()->subDay()]);
+
+        $this->get(route('piutangs.index'))
+            ->assertOk()
+            ->assertSee('1 piutang jatuh tempo');
+
+        $this->artisan('piutang:cek-jatuh-tempo')
+            ->expectsOutput('1 log piutang jatuh tempo dibuat.')
+            ->assertExitCode(0);
+        $this->artisan('piutang:cek-jatuh-tempo')
+            ->expectsOutput('0 log piutang jatuh tempo dibuat.')
+            ->assertExitCode(0);
+
+        $this->assertSame(1, ActivityLog::query()
+            ->where('aksi', 'piutang.jatuh_tempo')
+            ->where('subject_type', Piutang::class)
+            ->where('subject_id', $piutang->id)
+            ->count());
     }
 
     public function test_owner_can_view_piutang_but_cannot_record_payments(): void

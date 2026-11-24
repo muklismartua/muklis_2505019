@@ -71,6 +71,11 @@ class PiutangService
             ]);
 
             $this->syncLegacyReceivable($piutang);
+            $this->activityLogService->catat(
+                'piutang.dibuat',
+                "Piutang penjualan {$sale->nomor} sebesar Rp ".number_format($remaining, 0, ',', '.').' berhasil dibuat.',
+                $piutang,
+            );
 
             return $piutang;
         });

@@ -35,6 +35,13 @@
         @if ($definition['filters']['supplier'] ?? false)
             <x-ui.select name="supplier_id" label="Supplier" :options="$suppliers" :selected="$filters['supplier_id'] ?? null" placeholder="Semua supplier" />
         @endif
+        @if ($definition['filters']['status'] ?? false)
+            <x-ui.select name="status" label="Status piutang" :options="$statuses" :selected="$filters['status'] ?? null" placeholder="Semua status" />
+        @endif
+        @if ($definition['filters']['rentang_jatuh_tempo'] ?? false)
+            <x-ui.input name="jatuh_dari" label="Jatuh tempo dari" type="date" :value="$filters['jatuh_dari']" />
+            <x-ui.input name="jatuh_sampai" label="Jatuh tempo sampai" type="date" :value="$filters['jatuh_sampai']" />
+        @endif
         <div class="flex items-end gap-2">
             <x-ui.button type="submit" variant="secondary" class="w-full">Terapkan</x-ui.button>
         </div>
@@ -72,6 +79,8 @@
                                         {{ rupiah((int) $value) }}
                                     @elseif ($column['type'] === 'number')
                                         {{ number_format((int) $value, 0, ',', '.') }}
+                                    @elseif ($value === null)
+                                        —
                                     @elseif ($column['type'] === 'date')
                                         {{ \Illuminate\Support\Carbon::parse($value)->format('d/m/Y') }}
                                     @elseif ($column['type'] === 'datetime')

@@ -127,7 +127,12 @@
                                     <a href="{{ route('sales.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('sales.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('sales.*')])>Penjualan</a>
                                 @endcanany
                                 @canany(['piutang.lihat', 'piutang.kelola'])
-                                    <a href="{{ route('piutangs.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('piutangs.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('piutangs.*')])>Piutang</a>
+                                    <a href="{{ route('piutangs.index') }}" @click="sidebarOpen = false" @class(['flex items-center justify-between rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('piutangs.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('piutangs.*')])>
+                                        <span>Piutang</span>
+                                        @if ($overduePiutangCount > 0)
+                                            <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800" aria-label="{{ $overduePiutangCount }} piutang jatuh tempo">{{ number_format($overduePiutangCount, 0, ',', '.') }}</span>
+                                        @endif
+                                    </a>
                                 @endcanany
                             </div>
                         </div>

@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\Piutang;
+use App\Models\PiutangPayment;
 use App\Models\Product;
 use App\Models\Purchase;
 use App\Models\PurchaseItem;
@@ -13,6 +15,8 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Services\DashboardService;
+use App\Services\PiutangService;
+use App\Services\ReportService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -42,6 +46,8 @@ class DashboardReportTest extends TestCase
 
         $this->assertSame(1000, $data['stats']['sales_today']);
         $this->assertSame(1000, $data['stats']['sales_this_month']);
+        $this->assertSame(1000, $data['stats']['cash_received_today']);
+        $this->assertSame(1000, $data['stats']['cash_received_this_month']);
         $this->assertSame(1, $data['stats']['transactions_today']);
         $this->assertCount(7, $data['trend']['labels']);
         $this->assertSame(1000, end($data['trend']['values']));
@@ -60,6 +66,51 @@ class DashboardReportTest extends TestCase
         $thirtyDayData = app(DashboardService::class)->data($cashier, 30);
         $this->assertCount(30, $thirtyDayData['trend']['labels']);
         $this->assertSame(1000, end($thirtyDayData['trend']['values']));
+    }
+
+    public function test_dashboard_shows_receivables_and_separates_sales_from_cash_received(): void
+    {
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+        $firstCustomer = Customer::factory()->create(['nama' => 'Pelanggan Hutang A']);
+        $secondCustomer = Customer::factory()->create(['nama' => 'Pelanggan Hutang B']);
+        $firstPiutang = $this->createCreditSale(
+            $owner,
+            $firstCustomer,
+            total: 10000,
+            downPayment: 2000,
+            dueDate: today()->subDays(10)->toDateString(),
+            number: 'PJ-'.now()->format('Ymd').'-0301',
+        );
+        $this->createCreditSale(
+            $owner,
+            $secondCustomer,
+            total: 5000,
+            downPayment: 0,
+            dueDate: today()->subDays(2)->toDateString(),
+            number: 'PJ-'.now()->format('Ymd').'-0302',
+        );
+
+        $this->actingAs($owner);
+        app(PiutangService::class)->catatPembayaran($firstPiutang, 3000, 'tunai');
+
+        $data = app(DashboardService::class)->data($owner, 7);
+        $this->assertSame(15000, $data['stats']['sales_today']);
+        $this->assertSame(5000, $data['stats']['cash_received_today']);
+        $this->assertSame(10000, $data['stats']['active_receivables']);
+        $this->assertSame(2, $data['stats']['overdue_receivable_count']);
+        $this->assertSame(10000, $data['stats']['overdue_receivable_total']);
+        $this->assertSame(
+            ['Pelanggan Hutang A', 'Pelanggan Hutang B'],
+            $data['top_debtors']->pluck('nama')->all(),
+        );
+
+        $this->get(route('dashboard'))
+            ->assertOk()
+            ->assertSee('Total Piutang Aktif')
+            ->assertSee('Piutang Jatuh Tempo')
+            ->assertSee('Total diterima hari ini')
+            ->assertSee('Pelanggan Hutang A');
     }
 
     public function test_owner_can_view_and_export_all_sqlite_reports(): void
@@ -148,6 +199,9 @@ class DashboardReportTest extends TestCase
             'stok-saat-ini',
             'mutasi-stok',
             'laba-rugi',
+            'piutang-pelanggan',
+            'piutang-aging',
+            'riwayat-pembayaran-piutang',
         ];
 
         foreach ($reports as $report) {
@@ -187,6 +241,87 @@ class DashboardReportTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_sales_reports_separate_cash_received_and_receivable_reports_cover_balance_aging_and_payments(): void
+    {
+        $owner = User::factory()->create();
+        $owner->assignRole('owner');
+        $customer = Customer::factory()->create(['nama' => 'Pelanggan Laporan Piutang']);
+        $dueDate = today()->subDays(45)->toDateString();
+        $piutang = $this->createCreditSale(
+            $owner,
+            $customer,
+            10000,
+            2000,
+            $dueDate,
+            'PJ-'.now()->format('Ymd').'-0401',
+        );
+        $payment = PiutangPayment::query()->create([
+            'piutang_id' => $piutang->id,
+            'nomor' => 'BYR-'.now()->format('Ymd').'-0001',
+            'tanggal' => today()->toDateString(),
+            'jumlah' => 1000,
+            'metode' => 'transfer',
+            'user_id' => $owner->id,
+        ]);
+        $piutang->update(['terbayar' => 3000, 'sisa' => 7000]);
+        $piutang->sale()->update(['total_dibayar' => 3000, 'sisa' => 7000]);
+        $product = Product::factory()->create(['sku' => 'PIUTANG-001', 'nama' => 'Produk Piutang']);
+        SaleItem::query()->create([
+            'sale_id' => $piutang->sale_id,
+            'product_id' => $product->id,
+            'qty' => 1,
+            'harga_jual' => 10000,
+            'diskon' => 0,
+            'subtotal' => 10000,
+        ]);
+
+        $filters = app(ReportService::class)->normalizeFilters([
+            'dari' => today()->toDateString(),
+            'sampai' => today()->toDateString(),
+            'customer_id' => $customer->id,
+            'status' => Piutang::STATUS_UNPAID,
+            'jatuh_dari' => $dueDate,
+            'jatuh_sampai' => $dueDate,
+        ]);
+        $reportService = app(ReportService::class);
+        $salesByDate = $reportService->rows('penjualan-tanggal', $filters, paginate: false)->first();
+        $this->assertSame(10000, $salesByDate['penjualan']);
+        $this->assertSame(3000, $salesByDate['diterima']);
+
+        $salesByCustomer = $reportService->rows('penjualan-pelanggan', $filters, paginate: false)->first();
+        $this->assertSame(10000, $salesByCustomer['penjualan']);
+        $this->assertSame(3000, $salesByCustomer['diterima']);
+        $salesByProduct = $reportService->rows('penjualan-produk', [
+            ...$filters,
+            'product_id' => $product->id,
+        ], paginate: false)->first();
+        $this->assertSame(10000, $salesByProduct['penjualan']);
+        $this->assertSame(3000, $salesByProduct['diterima']);
+
+        $receivableRows = $reportService->rows('piutang-pelanggan', $filters, paginate: false);
+        $this->assertCount(1, $receivableRows);
+        $this->assertSame(7000, $receivableRows->first()['sisa']);
+        $agingRows = $reportService->rows(
+            'piutang-aging',
+            ['customer_id' => $customer->id],
+            paginate: false,
+        );
+        $this->assertSame(7000, $agingRows->first()['hari_31_60']);
+        $paymentRows = $reportService->rows('riwayat-pembayaran-piutang', [
+            'dari' => today()->toDateString(),
+            'sampai' => today()->toDateString(),
+            'customer_id' => $customer->id,
+        ], paginate: false);
+        $this->assertSame($payment->nomor, $paymentRows->first()['nomor_pembayaran']);
+        $this->assertSame(1000, $paymentRows->first()['jumlah']);
+
+        $this->actingAs($owner)
+            ->get(route('reports.show', ['report' => 'piutang-aging', 'customer_id' => $customer->id]))
+            ->assertOk()
+            ->assertSee('31–60 Hari')
+            ->assertSee('Rp 7.000');
+    }
+
     private function createSale(User $user, Product $product, int $total, string $number): Sale
     {
         $sale = Sale::query()->create([
@@ -211,5 +346,43 @@ class DashboardReportTest extends TestCase
         ]);
 
         return $sale;
+    }
+
+    private function createCreditSale(
+        User $user,
+        Customer $customer,
+        int $total,
+        int $downPayment,
+        string $dueDate,
+        string $number,
+    ): Piutang {
+        $sale = Sale::query()->create([
+            'nomor' => $number,
+            'customer_id' => $customer->id,
+            'user_id' => $user->id,
+            'tanggal' => now()->toDateString(),
+            'subtotal' => $total,
+            'diskon' => 0,
+            'pajak' => 0,
+            'total' => $total,
+            'bayar' => $downPayment,
+            'kembalian' => 0,
+            'metode_pembayaran' => Sale::PAYMENT_TEMPO,
+            'status' => Sale::STATUS_COMPLETED,
+            'status_pembayaran' => 'belum_lunas',
+            'jatuh_tempo' => $dueDate,
+            'total_dibayar' => $downPayment,
+            'sisa' => $total - $downPayment,
+        ]);
+
+        return Piutang::query()->create([
+            'sale_id' => $sale->id,
+            'customer_id' => $customer->id,
+            'total' => $total,
+            'terbayar' => $downPayment,
+            'sisa' => $total - $downPayment,
+            'jatuh_tempo' => $dueDate,
+            'status' => Piutang::STATUS_UNPAID,
+        ]);
     }
 }

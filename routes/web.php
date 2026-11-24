@@ -133,6 +133,9 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/piutangs', [PiutangController::class, 'index'])
         ->middleware('permission:piutang.lihat|piutang.kelola')
         ->name('piutangs.index');
+    Route::get('/piutangs/{piutang}/pembayaran/{payment}/pdf', [PiutangController::class, 'paymentPdf'])
+        ->middleware('permission:piutang.lihat|piutang.kelola')
+        ->name('piutangs.payments.pdf');
     Route::get('/piutangs/{piutang}', [PiutangController::class, 'show'])
         ->middleware('permission:piutang.lihat|piutang.kelola')
         ->name('piutangs.show');

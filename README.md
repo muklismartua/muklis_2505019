@@ -74,13 +74,30 @@ Registrasi publik dinonaktifkan. Admin dapat mengelola pengguna dan role dari me
 - Transaksi pembelian dan penjualan multi-item, validasi stok di server, pembatalan transaksi, dan nomor transaksi harian dengan prefix yang dapat diatur.
 - Pembayaran penjualan tempo wajib memilih pelanggan; sisa pembayaran disimpan di tabel piutang dan ditampilkan pada detail transaksi serta dokumen penjualan.
 - Pengelolaan piutang per pelanggan dengan jatuh tempo, cicilan/pelunasan bernomor, sinkronisasi status pembayaran penjualan, dan validasi batas hutang pelanggan.
-- Invoice penjualan PDF, nota penjualan 80 mm, dan bukti pembelian PDF.
-- Dashboard ringkasan, grafik penjualan, laporan penjualan/pembelian/stok/mutasi/laba-rugi dengan ekspor Excel dan PDF.
-- Log aktivitas login, perubahan master data, transaksi, dan stok opname; hanya admin yang dapat mengaksesnya.
+- Invoice penjualan PDF dan nota 80 mm menampilkan DP, sisa hutang, jatuh tempo, dan status pembayaran; tersedia juga bukti PDF untuk setiap cicilan serta bukti pembelian.
+- Dashboard ringkasan piutang aktif/jatuh tempo, 5 pelanggan dengan hutang terbesar, grafik penjualan, serta perbandingan total penjualan dengan kas yang benar-benar diterima.
+- Laporan penjualan/pembelian/stok/mutasi/laba-rugi dan laporan piutang, umur piutang, serta riwayat cicilan; laporan dapat diekspor ke Excel dan PDF.
+- Log aktivitas login, perubahan master data, transaksi, pembuatan/pembayaran piutang, piutang jatuh tempo, dan stok opname; hanya admin yang dapat mengaksesnya.
 - Pengaturan informasi toko, logo, prefix transaksi, dan persentase pajak default.
 - Antarmuka dan pesan validasi berbahasa Indonesia, dengan halaman kesalahan 403 dan 404 yang ramah.
 
 Nominal disimpan sebagai bilangan bulat rupiah. Zona waktu aplikasi menggunakan `Asia/Jakarta`.
+
+## Pemeriksaan piutang jatuh tempo
+
+Piutang yang melewati tanggal jatuh tempo ditampilkan sebagai badge pada menu **Piutang**. Perintah berikut mencatat setiap piutang terlambat ke log aktivitas satu kali:
+
+```powershell
+php artisan piutang:cek-jatuh-tempo
+```
+
+Perintah dijadwalkan otomatis setiap hari pukul 08.00. Untuk menjalankan scheduler saat pengembangan lokal, gunakan:
+
+```powershell
+php artisan schedule:work
+```
+
+Di server produksi, jalankan scheduler Laravel secara berkala sesuai panduan deployment Laravel.
 
 ## Pengujian dan pemeriksaan
 

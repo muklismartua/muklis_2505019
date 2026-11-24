@@ -18,6 +18,16 @@
                 <p class="mt-2 text-xs text-slate-500">Transaksi milik Anda</p>
             @endif
         </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu kas masuk hari ini">
+            <p class="text-sm font-medium text-slate-500">Total diterima hari ini</p>
+            <p class="mt-3 text-2xl font-bold text-emerald-700">{{ $stats['cash_received_today'] === null ? '—' : rupiah($stats['cash_received_today']) }}</p>
+            <p class="mt-2 text-xs text-slate-500">Kas masuk dari penjualan dan cicilan</p>
+        </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu kas masuk bulan ini">
+            <p class="text-sm font-medium text-slate-500">Total diterima bulan ini</p>
+            <p class="mt-3 text-2xl font-bold text-emerald-700">{{ $stats['cash_received_this_month'] === null ? '—' : rupiah($stats['cash_received_this_month']) }}</p>
+            <p class="mt-2 text-xs text-slate-500">Kas masuk dari penjualan dan cicilan</p>
+        </section>
         <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu ringkasan jumlah transaksi hari ini">
             <p class="text-sm font-medium text-slate-500">Jumlah transaksi hari ini</p>
             <p class="mt-3 text-2xl font-bold text-slate-900">{{ number_format($stats['transactions_today'], 0, ',', '.') }}</p>
@@ -32,6 +42,23 @@
                 <p class="mt-2 text-xs text-slate-500">Ringkasan stok tersedia untuk Anda</p>
             @else
                 <p class="mt-2 text-xs text-slate-500">Tidak tersedia untuk role Anda</p>
+            @endif
+        </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu total piutang aktif">
+            <p class="text-sm font-medium text-slate-500">Total Piutang Aktif</p>
+            <p class="mt-3 text-2xl font-bold text-slate-900">{{ $stats['active_receivables'] === null ? '—' : rupiah($stats['active_receivables']) }}</p>
+            @unless ($can_view_receivables)
+                <p class="mt-2 text-xs text-slate-500">Tidak tersedia untuk role Anda</p>
+            @endunless
+        </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu piutang jatuh tempo">
+            <p class="text-sm font-medium text-slate-500">Piutang Jatuh Tempo</p>
+            @if ($stats['overdue_receivable_count'] === null)
+                <p class="mt-3 text-2xl font-bold text-slate-900">—</p>
+                <p class="mt-2 text-xs text-slate-500">Tidak tersedia untuk role Anda</p>
+            @else
+                <p class="mt-3 text-2xl font-bold text-red-700">{{ number_format($stats['overdue_receivable_count'], 0, ',', '.') }} piutang</p>
+                <p class="mt-2 text-sm font-semibold text-red-700">{{ rupiah($stats['overdue_receivable_total']) }}</p>
             @endif
         </section>
     </div>
@@ -91,6 +118,29 @@
             @endif
         </section>
     </div>
+
+    <section class="mt-6 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div class="mb-4">
+            <h2 class="font-semibold text-slate-900">5 pelanggan dengan hutang terbesar</h2>
+            @if (auth()->user()->hasRole('kasir'))
+                <p class="mt-1 text-xs text-slate-500">Berdasarkan piutang dari penjualan milik Anda.</p>
+            @endif
+        </div>
+        @if ($can_view_receivables)
+            <x-ui.table :headers="['Pelanggan', 'Total piutang aktif']">
+                @forelse ($top_debtors as $debtor)
+                    <tr>
+                        <td class="px-5 py-4 font-medium">{{ $debtor->nama }}</td>
+                        <td class="whitespace-nowrap px-5 py-4 text-right font-semibold">{{ rupiah((int) $debtor->total_hutang) }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="2" class="px-5 py-8 text-center text-slate-500">Belum ada piutang aktif.</td></tr>
+                @endforelse
+            </x-ui.table>
+        @else
+            <p class="py-6 text-center text-sm text-slate-500">Data tidak tersedia untuk role Anda.</p>
+        @endif
+    </section>
 
     <section class="mt-6">
         <div class="mb-3">

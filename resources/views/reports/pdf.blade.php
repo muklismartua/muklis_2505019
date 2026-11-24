@@ -21,6 +21,12 @@
             Periode {{ \Illuminate\Support\Carbon::parse($filters['dari'])->format('d/m/Y') }}
             sampai {{ \Illuminate\Support\Carbon::parse($filters['sampai'])->format('d/m/Y') }}.
         @endif
+        @if ($definition['filters']['rentang_jatuh_tempo'] ?? false)
+            Jatuh tempo:
+            {{ $filters['jatuh_dari'] ? \Illuminate\Support\Carbon::parse($filters['jatuh_dari'])->format('d/m/Y') : 'awal' }}
+            sampai
+            {{ $filters['jatuh_sampai'] ? \Illuminate\Support\Carbon::parse($filters['jatuh_sampai'])->format('d/m/Y') : 'akhir' }}.
+        @endif
     </p>
     @if ($stockValueTotal !== null)
         <p><strong>Total nilai persediaan:</strong> {{ rupiah($stockValueTotal) }}</p>
@@ -43,6 +49,8 @@
                                 {{ rupiah((int) $value) }}
                             @elseif ($column['type'] === 'number')
                                 {{ number_format((int) $value, 0, ',', '.') }}
+                            @elseif ($value === null)
+                                —
                             @elseif ($column['type'] === 'date')
                                 {{ \Illuminate\Support\Carbon::parse($value)->format('d/m/Y') }}
                             @elseif ($column['type'] === 'datetime')

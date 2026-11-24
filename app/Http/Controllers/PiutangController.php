@@ -6,9 +6,13 @@ use App\Http\Requests\PiutangFilterRequest;
 use App\Http\Requests\StorePiutangPaymentRequest;
 use App\Models\Customer;
 use App\Models\Piutang;
+use App\Models\PiutangPayment;
 use App\Services\PiutangService;
+use App\Services\StoreSettingsService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class PiutangController extends Controller
@@ -60,5 +64,39 @@ class PiutangController extends Controller
         return redirect()
             ->route('piutangs.show', $piutang)
             ->with('success', 'Pembayaran piutang berhasil dicatat.');
+    }
+
+    public function paymentPdf(
+        Request $request,
+        Piutang $piutang,
+        PiutangPayment $payment,
+        StoreSettingsService $storeSettingsService,
+    ): Response {
+        abort_unless($request->user()->canAny(['piutang.lihat', 'piutang.kelola']), 403);
+        abort_unless($payment->piutang_id === $piutang->id, 404);
+
+        $piutang->load(['customer', 'sale']);
+        $payment->load('user');
+        $paymentTotal = (int) $piutang->payments()->sum('jumlah');
+        $paymentsThroughThis = (int) $piutang->payments()
+            ->where('id', '<=', $payment->id)
+            ->sum('jumlah');
+        $downPayment = max($piutang->terbayar - $paymentTotal, 0);
+        $sisaSetelahPembayaran = max(
+            $piutang->total - min($piutang->total, $downPayment + $paymentsThroughThis),
+            0,
+        );
+        $store = $storeSettingsService->forDocument();
+        $isCancelled = false;
+
+        return Pdf::loadView('pdf.piutangs.payment', compact(
+            'piutang',
+            'payment',
+            'sisaSetelahPembayaran',
+            'store',
+            'isCancelled',
+        ))
+            ->setPaper('a4', 'portrait')
+            ->download("bukti-pembayaran-{$payment->nomor}.pdf");
     }
 }

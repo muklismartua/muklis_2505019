@@ -9,7 +9,7 @@
 @section('body_class', 'receipt')
 
 @section('document')
-    @php($totalDibayar = $sale->total_dibayar ?? min($sale->bayar, $sale->total))
+    @php($totalDibayar = (int) ($sale->total_dibayar ?? 0) > 0 || (int) ($sale->sisa ?? 0) > 0 ? (int) $sale->total_dibayar : min((int) $sale->bayar, (int) $sale->total))
     <h2 class="document-title">NOTA PENJUALAN</h2>
 
     <table class="meta">
@@ -48,15 +48,20 @@
         <tr><td>Diskon</td><td class="right">{{ rupiah($sale->diskon) }}</td></tr>
         <tr><td>Pajak</td><td class="right">{{ rupiah($sale->pajak) }}</td></tr>
         <tr class="grand-total"><td>Total</td><td class="right">{{ rupiah($sale->total) }}</td></tr>
-        <tr><td>Bayar</td><td class="right">{{ rupiah($sale->bayar) }}</td></tr>
-        <tr><td>Total dibayar</td><td class="right">{{ rupiah($totalDibayar) }}</td></tr>
-        @if ($sale->piutang && $sale->sisa > 0)
-            <tr><td>Sisa piutang</td><td class="right">{{ rupiah($sale->sisa) }}</td></tr>
+        @if ($sale->metode_pembayaran === 'tempo')
+            <tr><td>DP / Uang Muka</td><td class="right">{{ rupiah($sale->bayar) }}</td></tr>
+            <tr><td>Total diterima</td><td class="right">{{ rupiah($totalDibayar) }}</td></tr>
+            <tr><td>Sisa hutang</td><td class="right">{{ rupiah((int) ($sale->sisa ?? 0)) }}</td></tr>
+            <tr><td>Jatuh tempo</td><td class="right">{{ $sale->jatuh_tempo?->format('d/m/Y') ?? '—' }}</td></tr>
+            <tr><td>Status</td><td class="right"><strong>{{ $sale->status === 'batal' ? 'BATAL' : (($sale->sisa ?? 0) > 0 ? 'BELUM LUNAS' : 'LUNAS') }}</strong></td></tr>
+        @else
+            <tr><td>Bayar</td><td class="right">{{ rupiah($sale->bayar) }}</td></tr>
+            <tr><td>Total dibayar</td><td class="right">{{ rupiah($totalDibayar) }}</td></tr>
         @endif
         <tr><td>Kembalian</td><td class="right">{{ rupiah($sale->kembalian) }}</td></tr>
     </table>
 
-    <p class="notes">Metode: {{ ucfirst($sale->metode_pembayaran) }}</p>
+    <p class="notes">Metode: {{ $sale->metode_pembayaran === 'tempo' ? 'Hutang (Bayar Nanti)' : ucfirst($sale->metode_pembayaran) }}</p>
     @if ($sale->catatan)
         <p class="notes"><strong>Catatan:</strong> {{ $sale->catatan }}</p>
     @endif
