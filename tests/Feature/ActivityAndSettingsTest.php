@@ -6,6 +6,7 @@ use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\User;
 use App\Services\NomorTransaksiService;
+use App\Services\StoreSettingsService;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Auth\Events\Login;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -74,12 +75,14 @@ class ActivityAndSettingsTest extends TestCase
             'prefix_pembelian' => 'BELI',
             'prefix_penjualan' => 'JUAL',
             'persentase_pajak_default' => '11',
+            'hari_jatuh_tempo_default' => 21,
         ])->assertRedirect(route('settings.edit'))->assertSessionHas('success');
 
         $this->assertDatabaseHas('settings', ['key' => 'nama_toko', 'value' => 'Toko Contoh']);
+        $this->assertDatabaseHas('settings', ['key' => 'hari_jatuh_tempo_default', 'value' => '21']);
         $this->assertSame('BELI-'.now()->format('Ymd').'-0001', app(NomorTransaksiService::class)->nomorPembelian());
         $this->assertSame('JUAL-'.now()->format('Ymd').'-0001', app(NomorTransaksiService::class)->nomorPenjualan());
-        $this->assertSame('Toko Contoh', app(\App\Services\StoreSettingsService::class)->forDocument()['name']);
+        $this->assertSame('Toko Contoh', app(StoreSettingsService::class)->forDocument()['name']);
     }
 
     public function test_invalid_default_tax_rate_is_rejected(): void

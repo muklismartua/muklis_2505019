@@ -84,10 +84,11 @@ class StoreSettingsService
                     'prefix_pembelian',
                     'prefix_penjualan',
                     'persentase_pajak_default',
+                    'hari_jatuh_tempo_default',
                 ] as $key) {
                     Setting::query()->updateOrCreate(
                         ['key' => $key],
-                        ['value' => (string) ($data[$key] ?? '')],
+                        ['value' => (string) ($data[$key] ?? $this->defaults()[$key])],
                     );
                 }
 
@@ -121,6 +122,7 @@ class StoreSettingsService
             'prefix_pembelian' => (string) config('store.prefix_pembelian', 'PB'),
             'prefix_penjualan' => (string) config('store.prefix_penjualan', 'PJ'),
             'persentase_pajak_default' => (string) config('store.default_tax_rate', '0'),
+            'hari_jatuh_tempo_default' => (string) config('store.default_due_days', '14'),
         ];
     }
 }

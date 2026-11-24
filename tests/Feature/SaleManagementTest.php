@@ -283,16 +283,56 @@ class SaleManagementTest extends TestCase
         $this->assertSame(5, $product->fresh()->stok);
     }
 
+    public function test_tempo_down_payment_cannot_exceed_total_and_due_date_must_be_in_future(): void
+    {
+        $customer = Customer::factory()->create();
+        $product = Product::factory()->create(['harga_jual' => 1000, 'stok' => 3]);
+        $base = [
+            'customer_id' => $customer->id,
+            'tanggal' => now()->toDateString(),
+            'diskon' => 0,
+            'pajak' => 0,
+            'metode_pembayaran' => 'tempo',
+            'items' => [['product_id' => $product->id, 'qty' => 1]],
+        ];
+
+        $this->from(route('sales.create'))
+            ->post(route('sales.store'), [
+                ...$base,
+                'jatuh_tempo' => now()->addDay()->toDateString(),
+                'bayar' => 1001,
+            ])
+            ->assertRedirect(route('sales.create'))
+            ->assertSessionHasErrors('bayar');
+
+        $this->from(route('sales.create'))
+            ->post(route('sales.store'), [
+                ...$base,
+                'jatuh_tempo' => now()->toDateString(),
+                'bayar' => 0,
+            ])
+            ->assertRedirect(route('sales.create'))
+            ->assertSessionHasErrors('jatuh_tempo');
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertSame(3, $product->fresh()->stok);
+    }
+
     private function createSale(Product $product, int $qty, array $overrides = []): Sale
     {
-        $this->post(route('sales.store'), array_merge([
+        $data = array_merge([
             'tanggal' => now()->toDateString(),
             'diskon' => 0,
             'pajak' => 0,
             'bayar' => $product->harga_jual * $qty,
             'metode_pembayaran' => 'tunai',
             'items' => [['product_id' => $product->id, 'qty' => $qty, 'diskon' => 0]],
-        ], $overrides))->assertRedirect();
+        ], $overrides);
+        if ($data['metode_pembayaran'] === 'tempo') {
+            $data['jatuh_tempo'] ??= now()->addDays(14)->toDateString();
+        }
+
+        $this->post(route('sales.store'), $data)->assertRedirect();
 
         return Sale::query()->latest('id')->firstOrFail();
     }

@@ -33,6 +33,7 @@ export default (
         quickCustomerMessage: '',
         duplicateCustomer: null,
         quickCustomerSubmitting: false,
+        customerSelectionError: '',
         items: (Array.isArray(initialItems) ? initialItems : []).map((item, index) => {
             const product = availableProducts.find((candidate) => candidate.id === Number(item.product_id));
             const requestedQuantity = Number(item.qty ?? 1);
@@ -58,6 +59,7 @@ export default (
         pajakPersen: Number(initialValues.pajak_persen ?? 0),
         bayar: Number(initialValues.bayar ?? 0),
         metodePembayaran: initialValues.metode_pembayaran ?? 'tunai',
+        jatuhTempo: initialValues.jatuh_tempo ?? '',
 
         get hasilPencarian() {
             const term = this.query.trim().toLocaleLowerCase('id-ID');
@@ -110,12 +112,18 @@ export default (
         },
 
         pilihPelanggan(customer) {
+            if (!customer && this.metodePembayaran === 'tempo') {
+                this.customerSelectionError = 'Pilih pelanggan untuk pembayaran hutang.';
+                return;
+            }
+
             this.selectedCustomer = customer;
             this.customerId = customer ? String(customer.id) : '';
             this.customerQuery = '';
             this.customerResults = [];
             this.customerOpen = false;
             this.customerSearchError = '';
+            this.customerSelectionError = '';
         },
 
         bukaModalPelanggan() {
@@ -190,6 +198,47 @@ export default (
 
         get kembalian() {
             return Math.max(Number(this.bayar || 0) - this.total, 0);
+        },
+
+        get sisaHutangBaru() {
+            return Math.max(this.total - Math.max(Number(this.bayar || 0), 0), 0);
+        },
+
+        get totalHutangSebelumnya() {
+            return Number(this.selectedCustomer?.total_hutang ?? 0);
+        },
+
+        get sisaBatasHutang() {
+            const limit = Number(this.selectedCustomer?.batas_hutang ?? 0);
+
+            return limit > 0 ? Math.max(limit - this.totalHutangSebelumnya, 0) : null;
+        },
+
+        get batasHutangTerlewati() {
+            const limit = Number(this.selectedCustomer?.batas_hutang ?? 0);
+
+            return this.metodePembayaran === 'tempo'
+                && limit > 0
+                && this.totalHutangSebelumnya + this.sisaHutangBaru > limit;
+        },
+
+        get tidakBolehSimpan() {
+            if (this.items.length === 0) {
+                return true;
+            }
+
+            if (this.metodePembayaran !== 'tempo') {
+                return false;
+            }
+
+            const downPayment = Number(this.bayar);
+
+            return !this.customerId
+                || !Number.isSafeInteger(downPayment)
+                || downPayment < 0
+                || downPayment > this.total
+                || !this.jatuhTempo
+                || this.batasHutangTerlewati;
         },
 
         subtotalItem(item) {

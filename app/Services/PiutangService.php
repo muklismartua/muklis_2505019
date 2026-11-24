@@ -17,9 +17,9 @@ class PiutangService
         private readonly ActivityLogService $activityLogService,
     ) {}
 
-    public function buatDariPenjualan(Sale $sale, int $dpDibayar, ?string $jatuhTempo): Piutang
+    public function buatDariPenjualan(Sale $sale, int $dpDibayar, ?string $jatuhTempo): ?Piutang
     {
-        return DB::transaction(function () use ($sale, $dpDibayar, $jatuhTempo): Piutang {
+        return DB::transaction(function () use ($sale, $dpDibayar, $jatuhTempo): ?Piutang {
             $sale = Sale::query()->lockForUpdate()->findOrFail($sale->id);
 
             if ($sale->customer_id === null) {
@@ -41,7 +41,18 @@ class PiutangService
             }
 
             $remaining = $sale->total - $dpDibayar;
-            $status = $remaining === 0 ? Piutang::STATUS_PAID : Piutang::STATUS_UNPAID;
+            if ($remaining === 0) {
+                $sale->update([
+                    'status_pembayaran' => 'lunas',
+                    'jatuh_tempo' => null,
+                    'total_dibayar' => $dpDibayar,
+                    'sisa' => 0,
+                ]);
+
+                return null;
+            }
+
+            $status = Piutang::STATUS_UNPAID;
             $piutang = Piutang::query()->create([
                 'sale_id' => $sale->id,
                 'customer_id' => $sale->customer_id,
@@ -142,6 +153,12 @@ class PiutangService
                 ->first();
 
             if ($piutang !== null) {
+                if ($piutang->payments()->exists()) {
+                    throw ValidationException::withMessages([
+                        'sale' => 'Penjualan tidak dapat dibatalkan karena sudah ada pembayaran piutang. Hubungi admin untuk membatalkan pembayaran terlebih dahulu.',
+                    ]);
+                }
+
                 $piutang->update([
                     'status' => Piutang::STATUS_CANCELLED,
                     'sisa' => 0,
@@ -188,9 +205,9 @@ class PiutangService
         $currentDebt = $this->totalHutangPelanggan($customer);
         if ($tambahan > PHP_INT_MAX - $currentDebt || $currentDebt + $tambahan > $limit) {
             throw ValidationException::withMessages([
-                'customer_id' => "Batas hutang pelanggan terlampaui. Hutang saat ini Rp "
-                    .number_format($currentDebt, 0, ',', '.').", tambahan Rp "
-                    .number_format($tambahan, 0, ',', '.').", batas Rp "
+                'customer_id' => 'Batas hutang pelanggan terlampaui. Hutang saat ini Rp '
+                    .number_format($currentDebt, 0, ',', '.').', tambahan Rp '
+                    .number_format($tambahan, 0, ',', '.').', batas Rp '
                     .number_format($limit, 0, ',', '.').'.',
             ]);
         }

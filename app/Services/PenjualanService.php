@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\Product;
 use App\Models\Customer;
+use App\Models\Product;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -138,6 +138,12 @@ class PenjualanService
             }
 
             $total = $this->add($totalBeforeTax, $tax, 'Total penjualan melebihi batas yang dapat dihitung.');
+            if ($paymentMethod === Sale::PAYMENT_TEMPO && $payment > $total) {
+                throw ValidationException::withMessages([
+                    'bayar' => 'Uang muka tidak boleh melebihi total penjualan.',
+                ]);
+            }
+
             if ($paymentMethod !== Sale::PAYMENT_TEMPO && $payment < $total) {
                 throw ValidationException::withMessages([
                     'bayar' => 'Jumlah bayar tidak mencukupi total penjualan.',
@@ -152,7 +158,9 @@ class PenjualanService
 
             $paidTowardTotal = min($payment, $total);
             $remaining = $total - $paidTowardTotal;
-            $dueDate = $paymentMethod === Sale::PAYMENT_TEMPO ? ($data['jatuh_tempo'] ?? null) : null;
+            $dueDate = $paymentMethod === Sale::PAYMENT_TEMPO && $remaining > 0
+                ? ($data['jatuh_tempo'] ?? null)
+                : null;
 
             if ($paymentMethod === Sale::PAYMENT_TEMPO && $remaining > 0) {
                 $customer = Customer::query()->findOrFail($data['customer_id']);
@@ -203,7 +211,7 @@ class PenjualanService
                 );
             }
 
-            if ($paymentMethod === Sale::PAYMENT_TEMPO) {
+            if ($paymentMethod === Sale::PAYMENT_TEMPO && $remaining > 0) {
                 $this->piutangService->buatDariPenjualan($sale, $paidTowardTotal, $dueDate);
             }
 
@@ -229,6 +237,12 @@ class PenjualanService
             if ($sale->status !== Sale::STATUS_COMPLETED) {
                 throw ValidationException::withMessages([
                     'status' => 'Penjualan ini sudah dibatalkan.',
+                ]);
+            }
+
+            if ($sale->piutang()->whereHas('payments')->exists()) {
+                throw ValidationException::withMessages([
+                    'sale' => 'Penjualan tidak dapat dibatalkan karena sudah ada pembayaran piutang. Hubungi admin untuk membatalkan pembayaran terlebih dahulu.',
                 ]);
             }
 

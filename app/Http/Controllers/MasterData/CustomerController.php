@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\MasterData;
 
-use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\CustomerSearchRequest;
+use App\Http\Requests\StoreCustomerRequest;
 use App\Http\Requests\StoreQuickCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Services\CustomerService;
 use App\Services\PiutangService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -58,7 +58,7 @@ class CustomerController extends LookupController
         CustomerService $customerService,
     ): JsonResponse {
         $result = $customerService->buatCepat($request->validated());
-        $customer = $this->customerData($result['customer']);
+        $customer = $this->customerData($customerService->denganRingkasan($result['customer']));
 
         if ($result['duplicate']) {
             return response()->json([
@@ -106,15 +106,22 @@ class CustomerController extends LookupController
     }
 
     /**
-     * @return array{id: int, kode: string, nama: string, telepon: ?string}
+     * @return array{id: int, kode: string, nama: string, telepon: ?string, batas_hutang: int, total_hutang: int, sisa_batas_hutang: ?int, ada_piutang_terlambat: bool}
      */
     private function customerData(Customer $customer): array
     {
+        $limit = (int) $customer->batas_hutang;
+        $debt = (int) ($customer->total_hutang ?? 0);
+
         return [
             'id' => $customer->id,
             'kode' => $customer->kode,
             'nama' => $customer->nama,
             'telepon' => $customer->telepon,
+            'batas_hutang' => $limit,
+            'total_hutang' => $debt,
+            'sisa_batas_hutang' => $limit > 0 ? max($limit - $debt, 0) : null,
+            'ada_piutang_terlambat' => (bool) ($customer->ada_piutang_terlambat ?? false),
         ];
     }
 }

@@ -22,7 +22,7 @@ class StoreSaleRequest extends FormRequest
                 Rule::exists('customers', 'id')->where('aktif', true),
             ],
             'tanggal' => ['required', 'date'],
-            'jatuh_tempo' => ['nullable', 'date', 'after_or_equal:tanggal'],
+            'jatuh_tempo' => ['nullable', 'required_if:metode_pembayaran,tempo', 'date', 'after:today'],
             'diskon' => ['nullable', 'integer', 'min:0'],
             'pajak' => ['nullable', 'integer', 'min:0'],
             'pajak_persen' => ['nullable', 'numeric', 'between:0,100'],
@@ -47,7 +47,8 @@ class StoreSaleRequest extends FormRequest
             'items.*.qty.min' => 'Jumlah produk minimal 1.',
             'pajak_persen.between' => 'Persentase pajak harus antara 0 sampai 100.',
             'customer_id.required_if' => 'Pelanggan wajib dipilih untuk penjualan dengan pembayaran tempo.',
-            'jatuh_tempo.after_or_equal' => 'Tanggal jatuh tempo tidak boleh sebelum tanggal penjualan.',
+            'jatuh_tempo.required_if' => 'Tanggal jatuh tempo wajib diisi untuk pembayaran hutang.',
+            'jatuh_tempo.after' => 'Tanggal jatuh tempo harus setelah hari ini.',
         ];
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Piutang;
 use App\Models\PiutangPayment;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Models\StockMovement;
 use App\Models\User;
 use App\Services\PiutangService;
 use Database\Seeders\RolePermissionSeeder;
@@ -139,6 +140,129 @@ class PiutangManagementTest extends TestCase
         $this->assertStringContainsString('Batas hutang pelanggan terlampaui', implode(' ', session('errors')->get('customer_id')));
     }
 
+    public function test_customer_search_returns_current_debt_limit_and_overdue_summary(): void
+    {
+        $customer = Customer::factory()->create(['batas_hutang' => 10000]);
+        $sale = $this->createTempoSale($customer, 6000, 1000, now()->addDays(2)->toDateString());
+        $sale->piutang()->firstOrFail()->update(['jatuh_tempo' => today()->subDay()]);
+
+        $this->getJson(route('customers.search', ['q' => $customer->nama]))
+            ->assertOk()
+            ->assertJsonPath('data.0.total_hutang', 5000)
+            ->assertJsonPath('data.0.batas_hutang', 10000)
+            ->assertJsonPath('data.0.sisa_batas_hutang', 5000)
+            ->assertJsonPath('data.0.ada_piutang_terlambat', true);
+    }
+
+    public function test_tempo_sale_creates_piutang_for_balance_and_deducts_stock(): void
+    {
+        $customer = Customer::factory()->create();
+        $product = Product::factory()->create(['harga_jual' => 10000, 'stok' => 5]);
+
+        $this->post(route('sales.store'), [
+            'customer_id' => $customer->id,
+            'tanggal' => now()->toDateString(),
+            'jatuh_tempo' => now()->addDays(14)->toDateString(),
+            'diskon' => 0,
+            'pajak' => 0,
+            'bayar' => 2500,
+            'metode_pembayaran' => 'tempo',
+            'items' => [['product_id' => $product->id, 'qty' => 2]],
+        ])->assertRedirect();
+
+        $sale = Sale::query()->firstOrFail();
+        $piutang = $sale->piutang()->firstOrFail();
+        $this->assertSame(20000, $sale->total);
+        $this->assertSame(2500, $sale->total_dibayar);
+        $this->assertSame(17500, $sale->sisa);
+        $this->assertSame(17500, $piutang->sisa);
+        $this->assertSame(3, $product->fresh()->stok);
+        $this->assertDatabaseHas('stock_movements', [
+            'product_id' => $product->id,
+            'referensi_type' => Sale::class,
+            'referensi_id' => $sale->id,
+            'tipe' => 'keluar',
+        ]);
+    }
+
+    public function test_full_down_payment_marks_tempo_sale_paid_without_creating_piutang(): void
+    {
+        $customer = Customer::factory()->create();
+        $product = Product::factory()->create(['harga_jual' => 10000, 'stok' => 2]);
+
+        $this->post(route('sales.store'), [
+            'customer_id' => $customer->id,
+            'tanggal' => now()->toDateString(),
+            'jatuh_tempo' => now()->addDays(14)->toDateString(),
+            'diskon' => 0,
+            'pajak' => 0,
+            'bayar' => 10000,
+            'metode_pembayaran' => 'tempo',
+            'items' => [['product_id' => $product->id, 'qty' => 1]],
+        ])->assertRedirect();
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame('lunas', $sale->status_pembayaran);
+        $this->assertSame(0, $sale->sisa);
+        $this->assertNull($sale->jatuh_tempo);
+        $this->assertDatabaseCount('piutangs', 0);
+        $this->assertDatabaseCount('receivables', 0);
+    }
+
+    public function test_tempo_sale_rolls_back_debt_sale_if_a_product_has_insufficient_stock(): void
+    {
+        $customer = Customer::factory()->create();
+        $first = Product::factory()->create(['nama' => 'Produk Aman', 'harga_jual' => 1000, 'stok' => 5]);
+        $second = Product::factory()->create(['nama' => 'Produk Kurang', 'harga_jual' => 1000, 'stok' => 1]);
+
+        $this->from(route('sales.create'))->post(route('sales.store'), [
+            'customer_id' => $customer->id,
+            'tanggal' => now()->toDateString(),
+            'jatuh_tempo' => now()->addDays(14)->toDateString(),
+            'diskon' => 0,
+            'pajak' => 0,
+            'bayar' => 0,
+            'metode_pembayaran' => 'tempo',
+            'items' => [
+                ['product_id' => $first->id, 'qty' => 2],
+                ['product_id' => $second->id, 'qty' => 2],
+            ],
+        ])->assertRedirect(route('sales.create'))->assertSessionHasErrors('items');
+
+        $this->assertDatabaseCount('sales', 0);
+        $this->assertDatabaseCount('sale_items', 0);
+        $this->assertDatabaseCount('piutangs', 0);
+        $this->assertDatabaseCount('receivables', 0);
+        $this->assertDatabaseCount('stock_movements', 0);
+        $this->assertSame(5, $first->fresh()->stok);
+        $this->assertSame(1, $second->fresh()->stok);
+    }
+
+    public function test_sale_cannot_be_cancelled_after_a_piutang_payment_is_recorded(): void
+    {
+        $customer = Customer::factory()->create();
+        $sale = $this->createTempoSale($customer, 7000);
+        $piutang = $sale->piutang()->firstOrFail();
+        $product = Product::query()->findOrFail($sale->items()->value('product_id'));
+        $movementCount = StockMovement::query()->count();
+
+        $this->post(route('piutangs.payments.store', $piutang), [
+            'jumlah' => 1000,
+            'metode' => 'tunai',
+        ])->assertRedirect(route('piutangs.show', $piutang));
+
+        $this->from(route('sales.show', $sale))
+            ->patch(route('sales.cancel', $sale))
+            ->assertRedirect(route('sales.show', $sale))
+            ->assertSessionHasErrors('sale');
+
+        $this->assertSame(Sale::STATUS_COMPLETED, $sale->fresh()->status);
+        $this->assertSame(Piutang::STATUS_UNPAID, $piutang->fresh()->status);
+        $this->assertSame(6000, $piutang->fresh()->sisa);
+        $this->assertSame(19, $product->fresh()->stok);
+        $this->assertSame($movementCount, StockMovement::query()->count());
+    }
+
     public function test_owner_can_view_piutang_but_cannot_record_payments(): void
     {
         $customer = Customer::factory()->create();
@@ -191,7 +315,7 @@ class PiutangManagementTest extends TestCase
         $this->post(route('sales.store'), [
             'customer_id' => $customer->id,
             'tanggal' => now()->toDateString(),
-            'jatuh_tempo' => $dueDate,
+            'jatuh_tempo' => $dueDate ?? now()->addDays(14)->toDateString(),
             'diskon' => 0,
             'pajak' => 0,
             'bayar' => $downPayment,

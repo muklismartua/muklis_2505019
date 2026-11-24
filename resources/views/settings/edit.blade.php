@@ -59,6 +59,18 @@
                 />
                 <p class="mt-1 text-xs text-slate-500">Dipakai sebagai nilai awal pada formulir penjualan baru.</p>
             </div>
+            <div>
+                <x-ui.input
+                    name="hari_jatuh_tempo_default"
+                    label="Jatuh tempo hutang default (hari)"
+                    type="number"
+                    min="1"
+                    max="365"
+                    step="1"
+                    :value="$settings['hari_jatuh_tempo_default']"
+                />
+                <p class="mt-1 text-xs text-slate-500">Jangka waktu setelah hari ini untuk penjualan Hutang (Bayar Nanti).</p>
+            </div>
         </section>
 
         <div class="flex justify-end">

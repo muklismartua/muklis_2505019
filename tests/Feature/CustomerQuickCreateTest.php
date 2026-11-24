@@ -39,7 +39,11 @@ class CustomerQuickCreateTest extends TestCase
         $this->getJson(route('customers.search', ['q' => 'Dewi']))
             ->assertOk()
             ->assertJsonPath('data.0.id', $customer->id)
-            ->assertJsonPath('data.0.kode', $customer->kode);
+            ->assertJsonPath('data.0.kode', $customer->kode)
+            ->assertJsonPath('data.0.batas_hutang', 0)
+            ->assertJsonPath('data.0.total_hutang', 0)
+            ->assertJsonPath('data.0.sisa_batas_hutang', null)
+            ->assertJsonPath('data.0.ada_piutang_terlambat', false);
         $this->getJson(route('customers.search', ['q' => '123456789']))
             ->assertOk()
             ->assertJsonPath('data.0.id', $customer->id);

@@ -35,7 +35,7 @@ class PdfDocumentTest extends TestCase
             ->assertOk()
             ->assertSee(route('sales.pdf', $sale))
             ->assertSee(route('sales.receipt', $sale))
-            ->assertSee('Cetak nota 80 mm');
+            ->assertSee('Cetak Nota (80 mm)');
 
         $invoice = $this->get(route('sales.pdf', $sale))
             ->assertOk()

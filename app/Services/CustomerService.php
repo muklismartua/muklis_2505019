@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Customer;
+use App\Models\Piutang;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ class CustomerService
             return new Collection;
         }
 
-        return Customer::query()
+        return $this->queryWithRingkasan()
             ->where('aktif', true)
             ->where(function ($query) use ($term): void {
                 $query->where('nama', 'like', "%{$term}%")
@@ -26,7 +27,14 @@ class CustomerService
             })
             ->orderBy('nama')
             ->limit(10)
-            ->get(['id', 'kode', 'nama', 'telepon']);
+            ->get(['id', 'kode', 'nama', 'telepon', 'batas_hutang']);
+    }
+
+    public function denganRingkasan(Customer $customer): Customer
+    {
+        return $this->queryWithRingkasan()
+            ->whereKey($customer->id)
+            ->firstOrFail();
     }
 
     /**
@@ -65,5 +73,20 @@ class CustomerService
     private function normalizePhone(?string $phone): string
     {
         return preg_replace('/\D+/', '', (string) $phone) ?? '';
+    }
+
+    private function queryWithRingkasan()
+    {
+        return Customer::query()
+            ->withSum(
+                ['piutangs as total_hutang' => fn ($query) => $query->where('status', Piutang::STATUS_UNPAID)],
+                'sisa',
+            )
+            ->withExists([
+                'piutangs as ada_piutang_terlambat' => fn ($query) => $query
+                    ->where('status', Piutang::STATUS_UNPAID)
+                    ->whereNotNull('jatuh_tempo')
+                    ->whereDate('jatuh_tempo', '<', today()),
+            ]);
     }
 }

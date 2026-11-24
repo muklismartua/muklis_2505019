@@ -3,7 +3,7 @@
 @section('title', 'Detail Penjualan')
 
 @section('content')
-    @php($totalDibayar = $sale->total_dibayar ?? min($sale->bayar, $sale->total))
+    @php($totalDibayar = $sale->status_pembayaran === 'lunas' && $sale->total_dibayar === 0 ? min($sale->bayar, $sale->total) : $sale->total_dibayar)
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <a href="{{ route('sales.index') }}" class="text-sm font-medium text-indigo-700 hover:underline">&larr; Kembali ke penjualan</a>
@@ -12,7 +12,12 @@
         </div>
         <div class="flex flex-wrap items-center gap-3">
             <a href="{{ route('sales.pdf', $sale) }}" class="rounded-md border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Cetak/Unduh PDF</a>
-            <a href="{{ route('sales.receipt', $sale) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cetak nota 80 mm</a>
+            <a href="{{ route('sales.receipt', $sale) }}" class="rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Cetak Nota (80 mm)</a>
+            @if ($sale->status === 'selesai' && $sale->piutang && $sale->sisa > 0)
+                @can('piutang.kelola')
+                    <a href="{{ route('piutangs.show', $sale->piutang) }}" class="rounded-md border border-emerald-200 px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50">Catat Pembayaran</a>
+                @endcan
+            @endif
             <x-ui.badge :status="$sale->status === 'selesai' ? 'success' : 'inactive'">{{ ucfirst($sale->status) }}</x-ui.badge>
             @if ($sale->status === 'selesai')
                 @can('penjualan.kelola')
@@ -59,8 +64,17 @@
             </table>
         </div>
         <dl class="grid gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm sm:grid-cols-2">
-            <div><dt class="text-slate-500">Metode pembayaran</dt><dd class="font-medium">{{ ucfirst($sale->metode_pembayaran) }}</dd></div>
-            <div><dt class="text-slate-500">Status pembayaran</dt><dd class="font-medium">{{ str_replace('_', ' ', ucfirst($sale->status_pembayaran)) }}</dd></div>
+            <div><dt class="text-slate-500">Metode pembayaran</dt><dd class="font-medium">{{ $sale->metode_pembayaran === 'tempo' ? 'Hutang (Bayar Nanti)' : ucfirst($sale->metode_pembayaran) }}</dd></div>
+            <div>
+                <dt class="text-slate-500">Status pembayaran</dt>
+                @if ($sale->status === 'batal')
+                    <dd class="font-medium text-slate-600">Transaksi dibatalkan</dd>
+                @elseif ($sale->sisa > 0)
+                    <dd class="font-semibold text-amber-700">Belum lunas · Sisa Rp {{ number_format($sale->sisa, 0, ',', '.') }}</dd>
+                @else
+                    <dd class="font-semibold text-emerald-700">Lunas</dd>
+                @endif
+            </div>
             @if ($sale->jatuh_tempo)
                 <div><dt class="text-slate-500">Jatuh tempo</dt><dd class="font-medium">{{ $sale->jatuh_tempo->format('d/m/Y') }}</dd></div>
             @endif

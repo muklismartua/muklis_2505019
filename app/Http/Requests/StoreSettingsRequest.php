@@ -21,6 +21,7 @@ class StoreSettingsRequest extends FormRequest
             'prefix_pembelian' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/'],
             'prefix_penjualan' => ['required', 'string', 'max:10', 'regex:/^[A-Z0-9]+$/'],
             'persentase_pajak_default' => ['required', 'numeric', 'between:0,100'],
+            'hari_jatuh_tempo_default' => ['sometimes', 'required', 'integer', 'between:1,365'],
             'logo' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'hapus_logo' => ['nullable', 'boolean'],
         ];
@@ -33,6 +34,7 @@ class StoreSettingsRequest extends FormRequest
             'prefix_pembelian.regex' => 'Prefix pembelian hanya boleh berisi huruf kapital dan angka.',
             'prefix_penjualan.regex' => 'Prefix penjualan hanya boleh berisi huruf kapital dan angka.',
             'persentase_pajak_default.between' => 'Persentase pajak harus antara 0 sampai 100.',
+            'hari_jatuh_tempo_default.between' => 'Jangka waktu jatuh tempo harus antara 1 sampai 365 hari.',
             'logo.image' => 'Logo harus berupa berkas gambar.',
             'logo.mimes' => 'Format logo yang diperbolehkan: JPG, PNG, atau WebP.',
             'logo.max' => 'Ukuran logo maksimal 2 MB.',

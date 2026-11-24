@@ -15,6 +15,10 @@
         'kode' => $selectedCustomer->kode,
         'nama' => $selectedCustomer->nama,
         'telepon' => $selectedCustomer->telepon,
+        'batas_hutang' => $selectedCustomer->batas_hutang,
+        'total_hutang' => $selectedCustomer->total_hutang ?? 0,
+        'sisa_batas_hutang' => $selectedCustomer->sisa_batas_hutang,
+        'ada_piutang_terlambat' => (bool) ($selectedCustomer->ada_piutang_terlambat ?? false),
     ] : null;
     $initialValues = [
         'diskon' => old('diskon', 0),
@@ -22,6 +26,7 @@
         'pajak_persen' => old('pajak_persen', $defaultTaxRate),
         'bayar' => old('bayar', 0),
         'metode_pembayaran' => old('metode_pembayaran', 'tunai'),
+        'jatuh_tempo' => old('jatuh_tempo', $defaultDueDate),
     ];
 @endphp
 
@@ -59,7 +64,7 @@
 
         <section class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 sm:grid-cols-2">
             <div class="relative">
-                <label for="customer-search" class="mb-1 block text-sm font-medium text-slate-700">Pelanggan (wajib untuk tempo)</label>
+                <label for="customer-search" class="mb-1 block text-sm font-medium text-slate-700">Pelanggan (wajib untuk Hutang)</label>
                 <input type="hidden" name="customer_id" :value="customerId">
                 <div class="flex gap-2">
                     <input
@@ -89,8 +94,9 @@
                     <button
                         type="button"
                         @click="pilihPelanggan(null)"
+                        :disabled="metodePembayaran === 'tempo'"
                         class="block w-full border-b border-slate-100 px-4 py-3 text-left text-sm font-medium hover:bg-slate-50"
-                    >Umum / Tanpa nama</button>
+                    >Umum / Tanpa nama <span x-show="metodePembayaran === 'tempo'" class="font-normal text-slate-500">(tidak tersedia untuk Hutang)</span></button>
                     <template x-for="customer in customerResults" :key="customer.id">
                         <button
                             type="button"
@@ -108,7 +114,8 @@
                     <span x-show="selectedCustomer" x-text="selectedCustomer ? `Dipilih: ${selectedCustomer.nama} (${selectedCustomer.kode})` : ''"></span>
                     <span x-show="!selectedCustomer">Umum / Tanpa nama</span>
                 </p>
-                <p x-cloak x-show="metodePembayaran === 'tempo' && !customerId" class="mt-1 text-sm text-amber-700">Pilih pelanggan untuk pembayaran tempo.</p>
+                <p x-cloak x-show="metodePembayaran === 'tempo' && !customerId" class="mt-1 text-sm text-red-700">Pilih pelanggan untuk pembayaran Hutang (Bayar Nanti).</p>
+                <p x-cloak x-show="customerSelectionError" x-text="customerSelectionError" class="mt-1 text-sm text-red-700" role="alert"></p>
                 <p x-cloak x-show="customerSearchError" x-text="customerSearchError" class="mt-1 text-sm text-red-700" role="alert"></p>
                 @error('customer_id')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
             </div>
@@ -116,7 +123,7 @@
             <x-ui.select
                 name="metode_pembayaran"
                 label="Metode pembayaran"
-                :options="['tunai' => 'Tunai', 'transfer' => 'Transfer', 'tempo' => 'Tempo']"
+                :options="['tunai' => 'Tunai', 'transfer' => 'Transfer', 'tempo' => 'Hutang (Bayar Nanti)']"
                 :selected="old('metode_pembayaran', 'tunai')"
                 :placeholder="null"
                 x-model="metodePembayaran"
@@ -127,10 +134,18 @@
                     name="jatuh_tempo"
                     label="Tanggal jatuh tempo"
                     type="date"
-                    :value="old('jatuh_tempo')"
+                    :value="old('jatuh_tempo', $defaultDueDate)"
+                    x-model="jatuhTempo"
+                    ::required="metodePembayaran === 'tempo'"
                 />
             </div>
-            <x-ui.input name="bayar" label="Bayar (rupiah)" type="number" min="0" step="1" :value="old('bayar', 0)" x-model.number="bayar" required />
+            <div>
+                <label for="bayar" class="mb-1 block text-sm font-medium text-slate-700">
+                    <span x-text="metodePembayaran === 'tempo' ? 'Uang Muka/DP (rupiah)' : 'Bayar (rupiah)'"></span>
+                </label>
+                <input id="bayar" name="bayar" type="number" min="0" step="1" :max="metodePembayaran === 'tempo' ? total : null" value="{{ old('bayar', 0) }}" x-model.number="bayar" required class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                @error('bayar')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
+            </div>
             <x-ui.input name="diskon" label="Diskon transaksi (rupiah)" type="number" min="0" step="1" :value="old('diskon', 0)" x-model.number="diskon" />
             <x-ui.input
                 name="pajak_persen"
@@ -149,8 +164,28 @@
                 <textarea id="catatan" name="catatan" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('catatan') }}</textarea>
                 @error('catatan')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
             </div>
+            <div x-cloak x-show="metodePembayaran === 'tempo'" class="space-y-3 rounded-md border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                <div class="grid gap-3 text-sm sm:grid-cols-2">
+                    <p>Total penjualan: <strong x-text="formatRupiah(total)"></strong></p>
+                    <p>Uang muka/DP: <strong x-text="formatRupiah(Math.max(Number(bayar || 0), 0))"></strong></p>
+                    <p>Sisa hutang baru: <strong x-text="formatRupiah(sisaHutangBaru)"></strong></p>
+                    <p>Hutang pelanggan sebelumnya: <strong x-text="formatRupiah(totalHutangSebelumnya)"></strong></p>
+                    <p>Sisa batas hutang:
+                        <strong x-text="sisaBatasHutang === null ? 'Tanpa batas' : formatRupiah(sisaBatasHutang)"></strong>
+                    </p>
+                </div>
+                <p x-cloak x-show="selectedCustomer && selectedCustomer.ada_piutang_terlambat" class="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900" role="status">
+                    Pelanggan memiliki piutang yang telah melewati jatuh tempo. Penjualan tetap dapat dilanjutkan.
+                </p>
+                <p x-cloak x-show="batasHutangTerlewati" class="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800" role="alert">
+                    Batas hutang akan terlampaui. Kurangi DP/sisa hutang atau pilih pelanggan lain sebelum menyimpan.
+                </p>
+                <p x-cloak x-show="metodePembayaran === 'tempo' && Number(bayar || 0) > total" class="rounded-md border border-red-300 bg-red-50 p-3 text-sm text-red-800" role="alert">
+                    Uang muka/DP tidak boleh melebihi total penjualan.
+                </p>
+            </div>
             <p class="text-xs text-slate-500 sm:col-span-2">
-                Pembayaran tunai dan transfer harus melunasi total. Pembayaran tempo dapat dibayar sebagian.
+                Pembayaran tunai dan transfer harus melunasi total. Hutang (Bayar Nanti) mewajibkan pelanggan dan dapat dibayar sebagian.
             </p>
         </section>
 
@@ -275,7 +310,7 @@
 
         <div class="flex justify-end gap-3">
             <a href="{{ route('sales.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-white">Batal</a>
-            <x-ui.button type="submit" :disabled="$products->isEmpty()">Simpan penjualan</x-ui.button>
+            <x-ui.button type="submit" :disabled="$products->isEmpty()" ::disabled="tidakBolehSimpan">Simpan penjualan</x-ui.button>
         </div>
 
         <div

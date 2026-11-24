@@ -8,12 +8,13 @@ use App\Http\Requests\StoreSaleRequest;
 use App\Models\Customer;
 use App\Models\Product;
 use App\Models\Sale;
+use App\Services\CustomerService;
 use App\Services\PenjualanService;
 use App\Services\StoreSettingsService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Response;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class SaleController extends Controller
@@ -37,12 +38,18 @@ class SaleController extends Controller
         return view('sales.index', compact('sales', 'customers'));
     }
 
-    public function create(Request $request, StoreSettingsService $storeSettingsService): View
-    {
+    public function create(
+        Request $request,
+        StoreSettingsService $storeSettingsService,
+        CustomerService $customerService,
+    ): View {
         abort_unless($request->user()->can('penjualan.kelola'), 403);
 
         $selectedCustomer = old('customer_id')
             ? Customer::query()->where('aktif', true)->find(old('customer_id'))
+            : null;
+        $selectedCustomer = $selectedCustomer
+            ? $customerService->denganRingkasan($selectedCustomer)
             : null;
         $customerSearchUrl = route('customers.search');
         $quickCustomerUrl = route('customers.quick-store');
@@ -51,6 +58,9 @@ class SaleController extends Controller
             ->orderBy('nama')
             ->get(['id', 'sku', 'nama', 'harga_jual', 'stok']);
         $defaultTaxRate = (float) $storeSettingsService->get('persentase_pajak_default');
+        $defaultDueDate = now()
+            ->addDays((int) $storeSettingsService->get('hari_jatuh_tempo_default'))
+            ->toDateString();
 
         return view('sales.create', compact(
             'selectedCustomer',
@@ -58,6 +68,7 @@ class SaleController extends Controller
             'quickCustomerUrl',
             'products',
             'defaultTaxRate',
+            'defaultDueDate',
         ));
     }
 
@@ -94,8 +105,7 @@ class SaleController extends Controller
         Request $request,
         Sale $sale,
         StoreSettingsService $storeSettingsService,
-    ): Response
-    {
+    ): Response {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
         $sale->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
         $store = $storeSettingsService->forDocument();
