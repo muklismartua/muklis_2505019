@@ -200,6 +200,7 @@ class DashboardReportTest extends TestCase
             'mutasi-stok',
             'laba-rugi',
             'piutang-pelanggan',
+            'hutang-supplier',
             'piutang-aging',
             'riwayat-pembayaran-piutang',
         ];

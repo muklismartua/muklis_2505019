@@ -1,22 +1,23 @@
 <?php
 
-use App\Http\Controllers\InventoryTransactionController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ActivityLogController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\HutangSupplierController;
+use App\Http\Controllers\InventoryTransactionController;
 use App\Http\Controllers\MasterData\CategoryController;
 use App\Http\Controllers\MasterData\CustomerController;
 use App\Http\Controllers\MasterData\ProductController;
 use App\Http\Controllers\MasterData\SupplierController;
 use App\Http\Controllers\MasterData\UnitController;
+use App\Http\Controllers\PiutangController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
-use App\Http\Controllers\PiutangController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
+use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockManualController;
 use App\Http\Controllers\StockMovementController;
-use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -111,6 +112,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/purchases', [PurchaseController::class, 'store'])
         ->middleware('permission:pembelian.kelola')
         ->name('purchases.store');
+    Route::get('/hutang-supplier', [HutangSupplierController::class, 'index'])
+        ->middleware('permission:hutang.lihat|hutang.kelola')
+        ->name('supplier-debts.index');
+    Route::get('/hutang-supplier/{hutangSupplier}', [HutangSupplierController::class, 'show'])
+        ->middleware('permission:hutang.lihat|hutang.kelola')
+        ->name('supplier-debts.show');
+    Route::post('/hutang-supplier/{hutangSupplier}/pembayaran', [HutangSupplierController::class, 'payment'])
+        ->middleware('permission:hutang.kelola')
+        ->name('supplier-debts.payments.store');
     Route::get('/purchases/{purchase}/pdf', [PurchaseController::class, 'pdf'])
         ->middleware('permission:pembelian.lihat|pembelian.kelola')
         ->name('purchases.pdf');

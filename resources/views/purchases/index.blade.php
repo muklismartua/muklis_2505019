@@ -21,7 +21,7 @@
         <x-ui.button type="submit" variant="secondary">Filter</x-ui.button>
     </form>
 
-    <x-ui.table :headers="['Nomor', 'Tanggal', 'Supplier', 'Metode pembayaran', 'Total', 'Status']" :paginator="$purchases">
+    <x-ui.table :headers="['Nomor', 'Tanggal', 'Supplier', 'Metode pembayaran', 'Status pembayaran', 'Sisa', 'Total', 'Status']" :paginator="$purchases">
         @forelse ($purchases as $purchase)
             <tr>
                 <td class="whitespace-nowrap px-5 py-4 font-medium">
@@ -29,14 +29,18 @@
                 </td>
                 <td class="whitespace-nowrap px-5 py-4">{{ $purchase->tanggal->format('d/m/Y') }}</td>
                 <td class="whitespace-nowrap px-5 py-4">{{ $purchase->supplier->nama }}</td>
-                <td class="whitespace-nowrap px-5 py-4">{{ ucfirst($purchase->metode_pembayaran) }}</td>
+                <td class="whitespace-nowrap px-5 py-4">{{ $purchase->metode_pembayaran === 'tempo' ? 'Hutang (Bayar Nanti)' : ucfirst($purchase->metode_pembayaran) }}</td>
+                <td class="whitespace-nowrap px-5 py-4">
+                    <x-ui.badge :status="$purchase->status_pembayaran === 'lunas' ? 'success' : 'warning'">{{ $purchase->status_pembayaran === 'lunas' ? 'Lunas' : 'Belum lunas' }}</x-ui.badge>
+                </td>
+                <td class="whitespace-nowrap px-5 py-4 text-right">{{ rupiah($purchase->sisa) }}</td>
                 <td class="whitespace-nowrap px-5 py-4 text-right">Rp {{ number_format($purchase->total, 0, ',', '.') }}</td>
                 <td class="whitespace-nowrap px-5 py-4">
                     <x-ui.badge :status="$purchase->status === 'selesai' ? 'success' : 'inactive'">{{ ucfirst($purchase->status) }}</x-ui.badge>
                 </td>
             </tr>
         @empty
-            <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">Belum ada pembelian.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">Belum ada pembelian.</td></tr>
         @endforelse
     </x-ui.table>
 @endsection

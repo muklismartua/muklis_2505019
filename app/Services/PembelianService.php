@@ -14,6 +14,7 @@ class PembelianService
         private readonly NomorTransaksiService $nomorTransaksiService,
         private readonly StockService $stockService,
         private readonly ActivityLogService $activityLogService,
+        private readonly HutangSupplierService $hutangSupplierService,
     ) {}
 
     /**
@@ -22,6 +23,9 @@ class PembelianService
      *     tanggal: string,
      *     diskon?: int|string,
      *     metode_pembayaran: string,
+     *     bayar?: int|string,
+     *     metode_dp?: string,
+     *     jatuh_tempo?: ?string,
      *     catatan?: ?string,
      *     perbarui_harga_beli?: bool|string|int,
      *     items: list<array{product_id: int|string, qty: int|string, harga_beli: int|string}>
@@ -78,6 +82,16 @@ class PembelianService
                 ]);
             }
 
+            $total = $subtotal - $diskon;
+            $isCredit = $data['metode_pembayaran'] === 'tempo';
+            $paidAmount = $isCredit ? (int) ($data['bayar'] ?? 0) : $total;
+            if ($paidAmount < 0 || $paidAmount > $total) {
+                throw ValidationException::withMessages([
+                    'bayar' => 'Uang muka tidak boleh melebihi total pembelian.',
+                ]);
+            }
+            $remaining = $total - $paidAmount;
+
             $purchase = Purchase::query()->create([
                 'nomor' => $this->nomorTransaksiService->nomorPembelian(),
                 'supplier_id' => $data['supplier_id'],
@@ -85,8 +99,12 @@ class PembelianService
                 'tanggal' => $data['tanggal'],
                 'subtotal' => $subtotal,
                 'diskon' => $diskon,
-                'total' => $subtotal - $diskon,
+                'total' => $total,
                 'metode_pembayaran' => $data['metode_pembayaran'],
+                'status_pembayaran' => $remaining > 0 ? 'belum_lunas' : 'lunas',
+                'jatuh_tempo' => $remaining > 0 ? ($data['jatuh_tempo'] ?? null) : null,
+                'total_dibayar' => $paidAmount,
+                'sisa' => $remaining,
                 'status' => Purchase::STATUS_COMPLETED,
                 'catatan' => $data['catatan'] ?? null,
             ]);
@@ -123,6 +141,16 @@ class PembelianService
                 }
             }
 
+            if ($data['metode_pembayaran'] === 'tempo') {
+                $this->hutangSupplierService->buatDariPembelian(
+                    $purchase,
+                    (int) ($data['bayar'] ?? 0),
+                    $data['jatuh_tempo'] ?? null,
+                    $user,
+                    $data['metode_dp'] ?? 'tunai',
+                );
+            }
+
             $this->activityLogService->catat(
                 'pembelian.dibuat',
                 "Pembelian {$purchase->nomor} berhasil dibuat.",
@@ -130,7 +158,7 @@ class PembelianService
                 $user,
             );
 
-            return $purchase->load(['items.product', 'supplier', 'user']);
+            return $purchase->refresh()->load(['items.product', 'supplier', 'user', 'hutangSupplier']);
         });
     }
 
@@ -173,6 +201,8 @@ class PembelianService
                     ]);
                 }
             }
+
+            $this->hutangSupplierService->batalkan($purchase, $user);
 
             foreach ($purchase->items as $item) {
                 $product = $products->get($item->product_id);

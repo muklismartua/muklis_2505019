@@ -1,4 +1,4 @@
-export default (products, initialItems, initialDiscount, initialUpdatePrice) => {
+export default (products, initialItems, initialDiscount, initialUpdatePrice, initialPaymentMethod, initialPaidAmount) => {
     const items = Array.isArray(initialItems) && initialItems.length
         ? initialItems
         : [{ product_id: '', qty: 1, harga_beli: 0 }];
@@ -20,6 +20,10 @@ export default (products, initialItems, initialDiscount, initialUpdatePrice) => 
         discount: Number.isSafeInteger(Number(initialDiscount)) && Number(initialDiscount) >= 0
             ? Number(initialDiscount)
             : 0,
+        paymentMethod: initialPaymentMethod || 'tunai',
+        paidAmount: Number.isSafeInteger(Number(initialPaidAmount)) && Number(initialPaidAmount) >= 0
+            ? Number(initialPaidAmount)
+            : 0,
         updatePurchasePrice: initialUpdatePrice === true || initialUpdatePrice === 1 || initialUpdatePrice === '1',
         nextKey: items.length,
 
@@ -29,6 +33,10 @@ export default (products, initialItems, initialDiscount, initialUpdatePrice) => 
 
         get total() {
             return Math.max(this.subtotal - Math.max(Number(this.discount || 0), 0), 0);
+        },
+
+        get remaining() {
+            return Math.max(this.total - Math.max(Number(this.paidAmount || 0), 0), 0);
         },
 
         lineSubtotal(item) {

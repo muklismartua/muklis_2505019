@@ -7,8 +7,14 @@
         <tr><td style="width: 105px">Nomor</td><td style="width: 10px">:</td><td>{{ $purchase->nomor }}</td></tr>
         <tr><td>Tanggal</td><td>:</td><td>{{ $purchase->tanggal->format('d/m/Y') }}</td></tr>
         <tr><td>Supplier</td><td>:</td><td>{{ $purchase->supplier->nama }}</td></tr>
-        <tr><td>Metode pembayaran</td><td>:</td><td>{{ ucfirst($purchase->metode_pembayaran) }}</td></tr>
+        <tr><td>Metode pembayaran</td><td>:</td><td>{{ $purchase->metode_pembayaran === 'tempo' ? 'Hutang (Bayar Nanti)' : ucfirst($purchase->metode_pembayaran) }}</td></tr>
         <tr><td>Status</td><td>:</td><td>{{ ucfirst($purchase->status) }}</td></tr>
+        <tr><td>Status pembayaran</td><td>:</td><td>{{ $purchase->status_pembayaran === 'lunas' ? 'LUNAS' : 'BELUM LUNAS' }}</td></tr>
+        @if ($purchase->status_pembayaran === 'belum_lunas')
+            <tr><td>DP</td><td>:</td><td>{{ rupiah($purchase->total_dibayar) }}</td></tr>
+            <tr><td>Sisa hutang</td><td>:</td><td>{{ rupiah($purchase->sisa) }}</td></tr>
+            <tr><td>Jatuh tempo</td><td>:</td><td>{{ $purchase->jatuh_tempo?->format('d/m/Y') ?? '—' }}</td></tr>
+        @endif
     </table>
 
     <table class="items">

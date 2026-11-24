@@ -111,7 +111,7 @@
                         </div>
                     @endcanany
 
-                    @canany(['pembelian.lihat', 'pembelian.kelola', 'penjualan.lihat', 'penjualan.kelola', 'piutang.lihat', 'piutang.kelola'])
+                    @canany(['pembelian.lihat', 'pembelian.kelola', 'penjualan.lihat', 'penjualan.kelola', 'piutang.lihat', 'piutang.kelola', 'hutang.lihat', 'hutang.kelola'])
                         <div class="pt-2">
                             <button type="button" class="flex w-full items-center justify-between px-3 py-2 text-left font-semibold text-slate-500 hover:text-slate-800" @click="transactionsOpen = !transactionsOpen">
                                 <span>Transaksi</span>
@@ -131,6 +131,14 @@
                                         <span>Piutang</span>
                                         @if ($overduePiutangCount > 0)
                                             <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800" aria-label="{{ $overduePiutangCount }} piutang jatuh tempo">{{ number_format($overduePiutangCount, 0, ',', '.') }}</span>
+                                        @endif
+                                    </a>
+                                @endcanany
+                                @canany(['hutang.lihat', 'hutang.kelola'])
+                                    <a href="{{ route('supplier-debts.index') }}" @click="sidebarOpen = false" @class(['flex items-center justify-between rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('supplier-debts.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('supplier-debts.*')])>
+                                        <span>Hutang Supplier</span>
+                                        @if ($overdueSupplierDebtCount > 0)
+                                            <span class="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-800" aria-label="{{ $overdueSupplierDebtCount }} hutang supplier jatuh tempo">{{ number_format($overdueSupplierDebtCount, 0, ',', '.') }}</span>
                                         @endif
                                     </a>
                                 @endcanany

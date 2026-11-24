@@ -29,7 +29,7 @@
     <form
         method="POST"
         action="{{ route('purchases.store') }}"
-        x-data="purchaseForm(@js($purchaseProducts), @js($initialItems), @js(old('diskon', 0)), @js(old('perbarui_harga_beli', false)))"
+        x-data="purchaseForm(@js($purchaseProducts), @js($initialItems), @js(old('diskon', 0)), @js(old('perbarui_harga_beli', false)), @js(old('metode_pembayaran', 'tunai')), @js(old('bayar', 0)))"
         class="space-y-6"
     >
         @csrf
@@ -39,12 +39,23 @@
             <x-ui.select
                 name="metode_pembayaran"
                 label="Metode pembayaran"
-                :options="['tunai' => 'Tunai', 'transfer' => 'Transfer', 'qris' => 'QRIS', 'lainnya' => 'Lainnya']"
+                :options="['tunai' => 'Tunai', 'transfer' => 'Transfer', 'qris' => 'QRIS', 'lainnya' => 'Lainnya', 'tempo' => 'Hutang (Bayar Nanti)']"
                 :selected="old('metode_pembayaran', 'tunai')"
                 :placeholder="null"
+                x-model="paymentMethod"
                 required
             />
             <x-ui.input name="diskon" label="Diskon (rupiah)" type="number" min="0" step="1" :value="old('diskon', 0)" x-model.number="discount" />
+            <div x-cloak x-show="paymentMethod === 'tempo'" class="grid gap-4 rounded-md border border-amber-200 bg-amber-50 p-4 sm:col-span-2 sm:grid-cols-2">
+                <x-ui.input name="bayar" label="Uang muka / DP (rupiah)" type="number" min="0" step="1" x-model.number="paidAmount" ::max="total" ::required="paymentMethod === 'tempo'" />
+                <x-ui.select name="metode_dp" label="Metode pembayaran DP" :options="['tunai' => 'Tunai', 'transfer' => 'Transfer']" :selected="old('metode_dp', 'tunai')" :placeholder="null" />
+                <x-ui.input name="jatuh_tempo" label="Jatuh tempo" type="date" :value="old('jatuh_tempo', $jatuhTempoDefault)" ::required="paymentMethod === 'tempo'" />
+                <div class="sm:col-span-2 flex flex-wrap justify-between gap-2 text-sm">
+                    <span>Total: <strong x-text="formatRupiah(total)"></strong></span>
+                    <span>DP: <strong x-text="formatRupiah(paidAmount)"></strong></span>
+                    <span>Sisa hutang: <strong class="text-red-700" x-text="formatRupiah(remaining)"></strong></span>
+                </div>
+            </div>
             <div class="sm:col-span-2">
                 <label for="catatan" class="mb-1 block text-sm font-medium text-slate-700">Catatan <span class="font-normal text-slate-500">(opsional)</span></label>
                 <textarea id="catatan" name="catatan" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ old('catatan') }}</textarea>

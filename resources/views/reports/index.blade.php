@@ -36,7 +36,7 @@
             <x-ui.select name="supplier_id" label="Supplier" :options="$suppliers" :selected="$filters['supplier_id'] ?? null" placeholder="Semua supplier" />
         @endif
         @if ($definition['filters']['status'] ?? false)
-            <x-ui.select name="status" label="Status piutang" :options="$statuses" :selected="$filters['status'] ?? null" placeholder="Semua status" />
+            <x-ui.select name="status" label="Status" :options="$statuses" :selected="$filters['status'] ?? null" placeholder="Semua status" />
         @endif
         @if ($definition['filters']['rentang_jatuh_tempo'] ?? false)
             <x-ui.input name="jatuh_dari" label="Jatuh tempo dari" type="date" :value="$filters['jatuh_dari']" />

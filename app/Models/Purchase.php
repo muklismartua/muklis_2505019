@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Purchase extends Model
 {
@@ -20,6 +21,10 @@ class Purchase extends Model
         'subtotal',
         'diskon',
         'total',
+        'status_pembayaran',
+        'jatuh_tempo',
+        'total_dibayar',
+        'sisa',
         'metode_pembayaran',
         'status',
         'catatan',
@@ -32,6 +37,9 @@ class Purchase extends Model
             'subtotal' => 'integer',
             'diskon' => 'integer',
             'total' => 'integer',
+            'total_dibayar' => 'integer',
+            'sisa' => 'integer',
+            'jatuh_tempo' => 'date',
         ];
     }
 
@@ -48,5 +56,10 @@ class Purchase extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    public function hutangSupplier(): HasOne
+    {
+        return $this->hasOne(HutangSupplier::class);
     }
 }

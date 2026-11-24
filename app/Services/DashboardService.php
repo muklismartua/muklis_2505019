@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\HutangSupplier;
 use App\Models\Piutang;
 use App\Models\Product;
 use App\Models\Purchase;
@@ -22,6 +23,7 @@ class DashboardService
         $canViewPurchases = $hasFullAccess || $user->can('pembelian.lihat');
         $canViewStock = $hasFullAccess || $user->can('stok.lihat');
         $canViewReceivables = $hasFullAccess || $user->canAny(['piutang.lihat', 'piutang.kelola']);
+        $canViewSupplierDebts = $hasFullAccess || $user->canAny(['hutang.lihat', 'hutang.kelola']);
         $salesUserId = $isCashier ? $user->id : null;
         $today = Carbon::today();
         $todayStart = $today->toDateString();
@@ -70,6 +72,11 @@ class DashboardService
         $overdueQuery = (clone $receivableQuery)
             ->whereNotNull('jatuh_tempo')
             ->whereDate('jatuh_tempo', '<', $todayStart);
+        $supplierDebtQuery = HutangSupplier::query()
+            ->where('status', HutangSupplier::STATUS_UNPAID);
+        $overdueSupplierDebtQuery = (clone $supplierDebtQuery)
+            ->whereNotNull('jatuh_tempo')
+            ->whereDate('jatuh_tempo', '<', $todayStart);
 
         return [
             'stats' => [
@@ -84,11 +91,15 @@ class DashboardService
                 'active_receivables' => $canViewReceivables ? (int) $receivableQuery->sum('sisa') : null,
                 'overdue_receivable_count' => $canViewReceivables ? (clone $overdueQuery)->count() : null,
                 'overdue_receivable_total' => $canViewReceivables ? (int) $overdueQuery->sum('sisa') : null,
+                'active_supplier_debts' => $canViewSupplierDebts ? (int) $supplierDebtQuery->sum('sisa') : null,
+                'overdue_supplier_debt_count' => $canViewSupplierDebts ? (clone $overdueSupplierDebtQuery)->count() : null,
+                'overdue_supplier_debt_total' => $canViewSupplierDebts ? (int) $overdueSupplierDebtQuery->sum('sisa') : null,
             ],
             'trend' => $trend,
             'days' => $days,
             'can_view_sales' => $canViewSales,
             'can_view_receivables' => $canViewReceivables,
+            'can_view_supplier_debts' => $canViewSupplierDebts,
             'can_open_stock' => $user->can('stok.lihat'),
             'top_products' => $canViewSales ? $this->topProducts($salesUserId, $today) : collect(),
             'top_debtors' => $canViewReceivables ? $this->topDebtors($salesUserId) : collect(),

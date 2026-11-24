@@ -2,8 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Purchase;
+use App\Models\HutangSupplierPayment;
 use App\Models\PiutangPayment;
+use App\Models\Purchase;
 use App\Models\Sale;
 use App\Models\StockManual;
 use Illuminate\Database\Eloquent\Model;
@@ -37,6 +38,11 @@ class NomorTransaksiService
     public function nomorPembayaranPiutang(): string
     {
         return $this->nomorHarian(PiutangPayment::class, 'BYR');
+    }
+
+    public function nomorPembayaranHutangSupplier(): string
+    {
+        return $this->nomorHarian(HutangSupplierPayment::class, 'BYH');
     }
 
     /**

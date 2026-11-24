@@ -74,6 +74,7 @@ Registrasi publik dinonaktifkan. Admin dapat mengelola pengguna dan role dari me
 - Transaksi pembelian dan penjualan multi-item, validasi stok di server, pembatalan transaksi, dan nomor transaksi harian dengan prefix yang dapat diatur.
 - Pembayaran penjualan tempo wajib memilih pelanggan; sisa pembayaran disimpan di tabel piutang dan ditampilkan pada detail transaksi serta dokumen penjualan.
 - Pengelolaan piutang per pelanggan dengan jatuh tempo, cicilan/pelunasan bernomor, sinkronisasi status pembayaran penjualan, dan validasi batas hutang pelanggan.
+- Pengelolaan hutang supplier dari pembelian tempo, pencatatan DP/cicilan dan pelunasan, ringkasan jatuh tempo di dashboard, serta laporan hutang supplier yang dapat diekspor.
 - Invoice penjualan PDF dan nota 80 mm menampilkan DP, sisa hutang, jatuh tempo, dan status pembayaran; tersedia juga bukti PDF untuk setiap cicilan serta bukti pembelian.
 - Dashboard ringkasan piutang aktif/jatuh tempo, 5 pelanggan dengan hutang terbesar, grafik penjualan, serta perbandingan total penjualan dengan kas yang benar-benar diterima.
 - Laporan penjualan/pembelian/stok/mutasi/laba-rugi dan laporan piutang, umur piutang, serta riwayat cicilan; laporan dapat diekspor ke Excel dan PDF.

@@ -124,6 +124,21 @@ class ReportService
                 ['key' => 'sisa', 'label' => 'Sisa', 'type' => 'money'],
             ],
         ],
+        'hutang-supplier' => [
+            'title' => 'Laporan Hutang Supplier',
+            'description' => 'Daftar hutang pembelian menurut supplier, status, dan rentang tanggal jatuh tempo.',
+            'filters' => ['supplier' => true, 'status' => true, 'rentang_jatuh_tempo' => true],
+            'columns' => [
+                ['key' => 'nomor', 'label' => 'Nomor Pembelian', 'type' => 'text'],
+                ['key' => 'supplier', 'label' => 'Supplier', 'type' => 'text'],
+                ['key' => 'tanggal', 'label' => 'Tanggal Pembelian', 'type' => 'date'],
+                ['key' => 'jatuh_tempo', 'label' => 'Jatuh Tempo', 'type' => 'date'],
+                ['key' => 'status', 'label' => 'Status Hutang', 'type' => 'text'],
+                ['key' => 'total', 'label' => 'Total Tagihan', 'type' => 'money'],
+                ['key' => 'terbayar', 'label' => 'Terbayar', 'type' => 'money'],
+                ['key' => 'sisa', 'label' => 'Sisa', 'type' => 'money'],
+            ],
+        ],
         'piutang-aging' => [
             'title' => 'Umur Piutang (Aging)',
             'description' => 'Sisa piutang belum lunas dikelompokkan berdasarkan jumlah hari setelah jatuh tempo.',
@@ -218,6 +233,7 @@ class ReportService
             'stok-saat-ini' => $this->currentStock(),
             'mutasi-stok' => $this->stockMovements($filters),
             'piutang-pelanggan' => $this->receivables($filters),
+            'hutang-supplier' => $this->supplierDebts($filters),
             'riwayat-pembayaran-piutang' => $this->receivablePayments($filters),
             'laba-rugi' => throw new \LogicException('Laporan laba rugi menggunakan agregasi per tanggal.'),
             'penjualan-tanggal', 'penjualan-produk', 'penjualan-pelanggan', 'piutang-aging' => throw new \LogicException('Laporan ini menggunakan agregasi khusus.'),
@@ -449,6 +465,29 @@ class ReportService
             )
             ->orderBy('piutangs.jatuh_tempo')
             ->orderBy('sales.nomor');
+    }
+
+    private function supplierDebts(array $filters): Builder
+    {
+        return DB::table('hutang_suppliers')
+            ->join('suppliers', 'suppliers.id', '=', 'hutang_suppliers.supplier_id')
+            ->join('purchases', 'purchases.id', '=', 'hutang_suppliers.purchase_id')
+            ->when($filters['supplier_id'] ?? null, fn (Builder $query, $id) => $query->where('hutang_suppliers.supplier_id', $id))
+            ->when($filters['status'] ?? null, fn (Builder $query, $status) => $query->where('hutang_suppliers.status', $status))
+            ->when($filters['jatuh_dari'] ?? null, fn (Builder $query, $date) => $query->whereDate('hutang_suppliers.jatuh_tempo', '>=', $date))
+            ->when($filters['jatuh_sampai'] ?? null, fn (Builder $query, $date) => $query->whereDate('hutang_suppliers.jatuh_tempo', '<=', $date))
+            ->select(
+                'purchases.nomor',
+                'suppliers.nama as supplier',
+                'purchases.tanggal',
+                'hutang_suppliers.jatuh_tempo',
+                'hutang_suppliers.status',
+                'hutang_suppliers.total',
+                'hutang_suppliers.terbayar',
+                'hutang_suppliers.sisa',
+            )
+            ->orderBy('hutang_suppliers.jatuh_tempo')
+            ->orderBy('purchases.nomor');
     }
 
     private function receivableAgingRows(array $filters): Collection

@@ -61,6 +61,23 @@
                 <p class="mt-2 text-sm font-semibold text-red-700">{{ rupiah($stats['overdue_receivable_total']) }}</p>
             @endif
         </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu total hutang supplier aktif">
+            <p class="text-sm font-medium text-slate-500">Total Hutang Supplier Aktif</p>
+            <p class="mt-3 text-2xl font-bold text-slate-900">{{ $stats['active_supplier_debts'] === null ? '—' : rupiah($stats['active_supplier_debts']) }}</p>
+            @unless ($can_view_supplier_debts)
+                <p class="mt-2 text-xs text-slate-500">Tidak tersedia untuk role Anda</p>
+            @endunless
+        </section>
+        <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm" aria-label="Kartu hutang supplier jatuh tempo">
+            <p class="text-sm font-medium text-slate-500">Hutang Supplier Jatuh Tempo</p>
+            @if ($stats['overdue_supplier_debt_count'] === null)
+                <p class="mt-3 text-2xl font-bold text-slate-900">—</p>
+                <p class="mt-2 text-xs text-slate-500">Tidak tersedia untuk role Anda</p>
+            @else
+                <p class="mt-3 text-2xl font-bold text-red-700">{{ number_format($stats['overdue_supplier_debt_count'], 0, ',', '.') }} hutang</p>
+                <p class="mt-2 text-sm font-semibold text-red-700">{{ rupiah($stats['overdue_supplier_debt_total']) }}</p>
+            @endif
+        </section>
     </div>
 
     <div class="mt-6 grid gap-6 xl:grid-cols-3">

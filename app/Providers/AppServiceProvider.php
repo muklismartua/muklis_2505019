@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Listeners\LogSuccessfulLogin;
 use App\Models\Category;
 use App\Models\Customer;
+use App\Models\HutangSupplier;
 use App\Models\Piutang;
 use App\Models\Product;
 use App\Models\Supplier;
@@ -54,6 +55,16 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $view->with('overduePiutangCount', $overdueCount);
+
+            $overdueSupplierDebtCount = $user?->canAny(['hutang.lihat', 'hutang.kelola'])
+                ? HutangSupplier::query()
+                    ->where('status', HutangSupplier::STATUS_UNPAID)
+                    ->whereNotNull('jatuh_tempo')
+                    ->whereDate('jatuh_tempo', '<', today())
+                    ->count()
+                : 0;
+
+            $view->with('overdueSupplierDebtCount', $overdueSupplierDebtCount);
         });
     }
 }

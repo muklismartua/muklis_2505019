@@ -36,7 +36,7 @@ class PurchaseController extends Controller
         return view('purchases.index', compact('purchases', 'suppliers'));
     }
 
-    public function create(Request $request): View
+    public function create(Request $request, StoreSettingsService $storeSettingsService): View
     {
         abort_unless($request->user()->can('pembelian.kelola'), 403);
 
@@ -45,8 +45,11 @@ class PurchaseController extends Controller
             ->where('aktif', true)
             ->orderBy('nama')
             ->get(['id', 'sku', 'nama', 'harga_beli', 'stok']);
+        $jatuhTempoDefault = now()
+            ->addDays((int) $storeSettingsService->get('hari_jatuh_tempo_default'))
+            ->toDateString();
 
-        return view('purchases.create', compact('suppliers', 'products'));
+        return view('purchases.create', compact('suppliers', 'products', 'jatuhTempoDefault'));
     }
 
     public function store(StorePurchaseRequest $request, PembelianService $pembelianService): RedirectResponse
@@ -61,7 +64,7 @@ class PurchaseController extends Controller
     public function show(Request $request, Purchase $purchase): View
     {
         abort_unless($request->user()->canAny(['pembelian.lihat', 'pembelian.kelola']), 403);
-        $purchase->load(['items.product', 'supplier', 'user']);
+        $purchase->load(['items.product', 'supplier', 'user', 'hutangSupplier']);
 
         return view('purchases.show', compact('purchase'));
     }
@@ -73,7 +76,7 @@ class PurchaseController extends Controller
     ): Response
     {
         abort_unless($request->user()->canAny(['pembelian.lihat', 'pembelian.kelola']), 403);
-        $purchase->load(['items.product', 'supplier', 'user']);
+        $purchase->load(['items.product', 'supplier', 'user', 'hutangSupplier']);
         $store = $storeSettingsService->forDocument();
         $isCancelled = $purchase->status === Purchase::STATUS_CANCELLED;
 
@@ -93,4 +96,5 @@ class PurchaseController extends Controller
             ->route('purchases.show', $purchase)
             ->with('success', 'Pembelian berhasil dibatalkan dan stok telah dikurangi kembali.');
     }
+
 }

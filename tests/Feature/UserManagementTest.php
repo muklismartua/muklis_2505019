@@ -73,14 +73,17 @@ class UserManagementTest extends TestCase
         $this->assertTrue($owner->can('dashboard.lihat'));
         $this->assertTrue($owner->can('laporan.lihat'));
         $this->assertTrue($owner->can('piutang.lihat'));
+        $this->assertTrue($owner->can('hutang.lihat'));
+        $this->assertFalse($owner->can('hutang.kelola'));
         $this->assertFalse($owner->can('piutang.kelola'));
         $this->assertFalse($owner->can('penjualan.lihat'));
-        $this->assertSame(3, $owner->getAllPermissions()->count());
+        $this->assertSame(4, $owner->getAllPermissions()->count());
 
         $warehouseStaff = User::factory()->create();
         $warehouseStaff->assignRole('staf_gudang');
         $this->assertTrue($warehouseStaff->can('pembelian.kelola'));
         $this->assertTrue($warehouseStaff->can('stok.kelola'));
+        $this->assertTrue($warehouseStaff->can('hutang.kelola'));
         $this->assertFalse($warehouseStaff->can('penjualan.kelola'));
 
         $cashier = User::factory()->create();
