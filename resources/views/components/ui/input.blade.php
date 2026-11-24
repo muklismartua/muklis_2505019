@@ -5,6 +5,9 @@
     'value' => null,
     'required' => false,
     'labelClass' => '',
+    'min' => null,
+    'max' => null,
+    'step' => null,
 ])
 
 @php
@@ -20,12 +23,15 @@
         @endif
     </label>
     <input
-        {{ $attributes->merge([
+        {{ $attributes->merge(array_filter([
             'id' => $inputId,
             'name' => $name,
             'type' => $type,
             'value' => $inputValue,
-        ])->class([
+            'min' => $min,
+            'max' => $max,
+            'step' => $step,
+        ], fn ($value) => $value !== null))->class([
             'w-full rounded-md border-slate-300 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500',
             'border-red-300 focus:border-red-500 focus:ring-red-500' => $errors->has($name),
         ]) }}

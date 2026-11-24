@@ -15,11 +15,20 @@
         @endif
 
         @foreach ($fields as $field)
-            @php($value = old($field['name'], $record?->{$field['name']}))
+            @php($value = old($field['name'], $record?->{$field['name']} ?? ($field['default'] ?? null)))
             @if (($field['type'] ?? 'text') === 'textarea')
                 <div>
                     <label for="{{ $field['name'] }}" class="mb-1 block text-sm font-medium text-slate-700">{{ $field['label'] }}</label>
                     <textarea id="{{ $field['name'] }}" name="{{ $field['name'] }}" rows="3" maxlength="{{ $field['maxlength'] ?? 2000 }}" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">{{ $value }}</textarea>
+                    @error($field['name'])<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
+                </div>
+            @elseif (($field['type'] ?? 'text') === 'checkbox')
+                <div>
+                    <input type="hidden" name="{{ $field['name'] }}" value="0">
+                    <label for="{{ $field['name'] }}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-700">
+                        <input id="{{ $field['name'] }}" type="checkbox" name="{{ $field['name'] }}" value="1" @checked((bool) $value) class="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
+                        {{ $field['label'] }}
+                    </label>
                     @error($field['name'])<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
                 </div>
             @else
@@ -30,6 +39,8 @@
                     :value="$value"
                     :required="$field['required'] ?? false"
                     :maxlength="$field['maxlength'] ?? 255"
+                    :min="$field['min'] ?? null"
+                    :step="$field['step'] ?? null"
                 />
             @endif
         @endforeach

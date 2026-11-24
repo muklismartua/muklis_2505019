@@ -50,6 +50,7 @@ abstract class LookupController extends Controller
             'title' => $this->title,
             'routeName' => $this->routeName,
             'columns' => $this->columns,
+            'canManage' => $request->user()->can($this->permission.'.kelola'),
         ]);
     }
 

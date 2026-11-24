@@ -69,7 +69,7 @@ Registrasi publik dinonaktifkan. Admin dapat mengelola pengguna dan role dari me
 ## Fitur
 
 - Hak akses berbasis role dan permission untuk admin, staf gudang, kasir, dan owner.
-- CRUD kategori, satuan, supplier, pelanggan, dan produk, termasuk pencarian, pagination, status aktif, upload foto, serta penghapusan produk secara soft delete.
+- CRUD kategori, satuan, supplier, pelanggan, dan produk, termasuk pencarian, pagination, batas hutang pelanggan, kode pelanggan otomatis, upload foto, serta penghapusan produk secara soft delete. Kasir dapat mencari atau membuat pelanggan langsung dari form penjualan; penghapusan pelanggan khusus admin.
 - Kartu stok, stok opname, dan modul stok manual multi-item. Penambahan/pengurangan manual dicatat per item dengan nomor `SM-YYYYMMDD-####`, alasan terpilih, pengguna, tanggal, serta keterangan opsional; semua mutasi dilakukan oleh `StockService`.
 - Transaksi pembelian dan penjualan multi-item, validasi stok di server, pembatalan transaksi, dan nomor transaksi harian dengan prefix yang dapat diatur.
 - Pembayaran penjualan tempo wajib memilih pelanggan; sisa pembayaran disimpan di tabel piutang dan ditampilkan pada detail transaksi serta dokumen penjualan.

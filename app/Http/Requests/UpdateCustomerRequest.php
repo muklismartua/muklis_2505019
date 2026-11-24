@@ -16,6 +16,8 @@ class UpdateCustomerRequest extends LookupRequest
             'telepon' => ['nullable', 'string', 'max:50'],
             'email' => ['nullable', 'email', 'max:255'],
             'alamat' => ['nullable', 'string', 'max:2000'],
+            'batas_hutang' => ['sometimes', 'required', 'integer', 'min:0'],
+            'aktif' => ['sometimes', 'boolean'],
         ];
     }
 }

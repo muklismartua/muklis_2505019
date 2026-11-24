@@ -74,6 +74,7 @@ return [
     'uuid' => ':attribute harus berupa UUID yang valid.',
     'attributes' => [
         'alamat' => 'alamat',
+        'batas_hutang' => 'batas hutang',
         'alasan' => 'alasan',
         'aksi' => 'aksi',
         'bayar' => 'jumlah bayar',
@@ -104,6 +105,7 @@ return [
         'tanggal_akhir' => 'tanggal akhir',
         'tanggal_mulai' => 'tanggal mulai',
         'telepon' => 'telepon',
+        'q' => 'kata kunci pencarian',
         'tipe' => 'tipe perubahan stok',
         'user_id' => 'pengguna',
         'is_active' => 'status akun',

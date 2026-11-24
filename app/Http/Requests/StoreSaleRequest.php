@@ -15,7 +15,12 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['nullable', 'required_if:metode_pembayaran,tempo', 'integer', 'exists:customers,id'],
+            'customer_id' => [
+                'nullable',
+                'required_if:metode_pembayaran,tempo',
+                'integer',
+                Rule::exists('customers', 'id')->where('aktif', true),
+            ],
             'tanggal' => ['required', 'date'],
             'diskon' => ['nullable', 'integer', 'min:0'],
             'pajak' => ['nullable', 'integer', 'min:0'],

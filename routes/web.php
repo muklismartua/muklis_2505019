@@ -34,8 +34,18 @@ Route::middleware(['auth', 'active'])->group(function () {
         ->middleware('permission:satuan.lihat|satuan.kelola');
     Route::resource('suppliers', SupplierController::class)
         ->middleware('permission:pemasok.lihat|pemasok.kelola');
+    Route::get('/pelanggan/cari', [CustomerController::class, 'search'])
+        ->middleware('permission:pelanggan.lihat')
+        ->name('customers.search');
+    Route::post('/pelanggan/cepat', [CustomerController::class, 'quickStore'])
+        ->middleware('permission:pelanggan.buat|penjualan.kelola')
+        ->name('customers.quick-store');
     Route::resource('customers', CustomerController::class)
+        ->except(['destroy'])
         ->middleware('permission:pelanggan.lihat|pelanggan.kelola');
+    Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])
+        ->middleware(['role:admin', 'permission:pelanggan.kelola'])
+        ->name('customers.destroy');
     Route::resource('products', ProductController::class)
         ->middleware('permission:produk.lihat|produk.kelola');
 

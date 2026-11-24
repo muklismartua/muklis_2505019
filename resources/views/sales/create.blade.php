@@ -10,6 +10,12 @@
         'harga_jual' => $product->harga_jual,
         'stok' => $product->stok,
     ])->values();
+    $initialCustomer = $selectedCustomer ? [
+        'id' => $selectedCustomer->id,
+        'kode' => $selectedCustomer->kode,
+        'nama' => $selectedCustomer->nama,
+        'telepon' => $selectedCustomer->telepon,
+    ] : null;
     $initialValues = [
         'diskon' => old('diskon', 0),
         'pajak' => old('pajak', 0),
@@ -46,21 +52,65 @@
     <form
         method="POST"
         action="{{ route('sales.store') }}"
-        x-data="saleForm(@js($saleProducts), @js(old('items', [])), @js($initialValues))"
+        x-data="saleForm(@js($saleProducts), @js(old('items', [])), @js($initialValues), @js($customerSearchUrl), @js($quickCustomerUrl), @js($initialCustomer), @js(csrf_token()))"
         class="space-y-6"
     >
         @csrf
 
         <section class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 sm:grid-cols-2">
-            <div>
-                <x-ui.select
-                    name="customer_id"
-                    label="Pelanggan (wajib untuk tempo)"
-                    :options="$customers"
-                    :selected="old('customer_id')"
-                    placeholder="Pelanggan umum"
-                    x-bind:required="metodePembayaran === 'tempo'"
-                />
+            <div class="relative">
+                <label for="customer-search" class="mb-1 block text-sm font-medium text-slate-700">Pelanggan (wajib untuk tempo)</label>
+                <input type="hidden" name="customer_id" :value="customerId">
+                <div class="flex gap-2">
+                    <input
+                        id="customer-search"
+                        type="search"
+                        x-model="customerQuery"
+                        @input.debounce.250ms="cariPelanggan()"
+                        @focus="customerOpen = true"
+                        @keydown.escape="customerOpen = false"
+                        autocomplete="off"
+                        placeholder="Cari nama atau nomor telepon"
+                        class="min-w-0 flex-1 rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        aria-describedby="customer-selection"
+                    >
+                    <button
+                        type="button"
+                        @click="bukaModalPelanggan()"
+                        class="whitespace-nowrap rounded-md border border-indigo-200 px-3 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
+                    >+ Pelanggan Baru</button>
+                </div>
+                <div
+                    x-cloak
+                    x-show="customerOpen"
+                    @click.outside="customerOpen = false"
+                    class="absolute z-30 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg"
+                >
+                    <button
+                        type="button"
+                        @click="pilihPelanggan(null)"
+                        class="block w-full border-b border-slate-100 px-4 py-3 text-left text-sm font-medium hover:bg-slate-50"
+                    >Umum / Tanpa nama</button>
+                    <template x-for="customer in customerResults" :key="customer.id">
+                        <button
+                            type="button"
+                            @click="pilihPelanggan(customer)"
+                            class="block w-full border-b border-slate-100 px-4 py-3 text-left text-sm last:border-b-0 hover:bg-slate-50"
+                        >
+                            <span class="block font-medium" x-text="customer.nama"></span>
+                            <span class="text-xs text-slate-500" x-text="`${customer.kode} · ${customer.telepon || 'Tanpa telepon'}`"></span>
+                        </button>
+                    </template>
+                    <p x-cloak x-show="customerLoading" class="px-4 py-3 text-sm text-slate-500">Mencari pelanggan...</p>
+                    <p x-cloak x-show="!customerLoading && customerQuery.trim() && customerResults.length === 0" class="px-4 py-3 text-sm text-slate-500">Pelanggan tidak ditemukan.</p>
+                </div>
+                <p id="customer-selection" class="mt-2 text-sm text-slate-600" aria-live="polite">
+                    <span x-show="selectedCustomer" x-text="selectedCustomer ? `Dipilih: ${selectedCustomer.nama} (${selectedCustomer.kode})` : ''"></span>
+                    <span x-show="!selectedCustomer">Umum / Tanpa nama</span>
+                </p>
+                <p x-cloak x-show="metodePembayaran === 'tempo' && !customerId" class="mt-1 text-sm text-amber-700">Pilih pelanggan untuk pembayaran tempo.</p>
+                <p x-cloak x-show="customerSearchError" x-text="customerSearchError" class="mt-1 text-sm text-red-700" role="alert"></p>
+                @error('customer_id')<p class="mt-1 text-sm text-red-700">{{ $message }}</p>@enderror
             </div>
             <x-ui.input name="tanggal" label="Tanggal penjualan" type="date" :value="old('tanggal', now()->toDateString())" required />
             <x-ui.select
@@ -218,6 +268,80 @@
         <div class="flex justify-end gap-3">
             <a href="{{ route('sales.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-white">Batal</a>
             <x-ui.button type="submit" :disabled="$products->isEmpty()">Simpan penjualan</x-ui.button>
+        </div>
+
+        <div
+            x-cloak
+            x-show="customerModalOpen"
+            x-transition.opacity
+            @keydown.escape.window="customerModalOpen = false"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4"
+            role="presentation"
+        >
+            <div @click.self="customerModalOpen = false" class="absolute inset-0"></div>
+            <section
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="quick-customer-title"
+                class="relative z-10 w-full max-w-lg rounded-lg bg-white p-6 shadow-xl"
+            >
+                <div class="mb-5 flex items-start justify-between gap-4">
+                    <div>
+                        <h2 id="quick-customer-title" class="text-lg font-bold">Tambah pelanggan baru</h2>
+                        <p class="mt-1 text-sm text-slate-600">Pelanggan akan langsung dipilih tanpa mengosongkan keranjang.</p>
+                    </div>
+                    <button type="button" @click="customerModalOpen = false" aria-label="Tutup" class="rounded px-2 text-2xl leading-none text-slate-500 hover:bg-slate-100">&times;</button>
+                </div>
+
+                <div x-cloak x-show="quickCustomerMessage" class="mb-4 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900" role="alert">
+                    <p x-text="quickCustomerMessage"></p>
+                    <div x-cloak x-show="duplicateCustomer" class="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <span x-text="duplicateCustomer ? `${duplicateCustomer.nama} · ${duplicateCustomer.telepon || 'Tanpa telepon'}` : ''"></span>
+                        <button
+                            type="button"
+                            @click="pilihPelanggan(duplicateCustomer); customerModalOpen = false"
+                            class="rounded-md bg-amber-700 px-3 py-2 text-xs font-semibold text-white hover:bg-amber-800"
+                        >Gunakan pelanggan ini</button>
+                    </div>
+                </div>
+
+                <div @keydown.enter.prevent class="space-y-4">
+                    <div>
+                        <label for="quick-customer-name" class="mb-1 block text-sm font-medium text-slate-700">Nama <span class="text-red-600">*</span></label>
+                        <input id="quick-customer-name" x-model="quickCustomer.nama" type="text" maxlength="255" required class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <template x-for="message in (quickCustomerErrors.nama || [])" :key="message">
+                            <p x-text="message" class="mt-1 text-sm text-red-700"></p>
+                        </template>
+                    </div>
+                    <div>
+                        <label for="quick-customer-phone" class="mb-1 block text-sm font-medium text-slate-700">Telepon</label>
+                        <input id="quick-customer-phone" x-model="quickCustomer.telepon" type="tel" maxlength="50" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <template x-for="message in (quickCustomerErrors.telepon || [])" :key="message">
+                            <p x-text="message" class="mt-1 text-sm text-red-700"></p>
+                        </template>
+                    </div>
+                    <div>
+                        <label for="quick-customer-address" class="mb-1 block text-sm font-medium text-slate-700">Alamat</label>
+                        <textarea id="quick-customer-address" x-model="quickCustomer.alamat" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                        <template x-for="message in (quickCustomerErrors.alamat || [])" :key="message">
+                            <p x-text="message" class="mt-1 text-sm text-red-700"></p>
+                        </template>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" @click="customerModalOpen = false" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-slate-50">Batal</button>
+                    <button
+                        type="button"
+                        @click="buatPelangganCepat()"
+                        :disabled="quickCustomerSubmitting"
+                        class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                        <span x-show="!quickCustomerSubmitting">Simpan & pilih</span>
+                        <span x-cloak x-show="quickCustomerSubmitting">Menyimpan...</span>
+                    </button>
+                </div>
+            </section>
         </div>
     </form>
 @endsection

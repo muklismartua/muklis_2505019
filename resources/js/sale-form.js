@@ -1,4 +1,12 @@
-export default (products, initialItems, initialValues = {}) => {
+export default (
+    products,
+    initialItems,
+    initialValues = {},
+    customerSearchUrl,
+    quickCustomerUrl,
+    initialCustomer = null,
+    csrfToken = '',
+) => {
     const availableProducts = products.map((product) => ({
         ...product,
         id: Number(product.id),
@@ -8,6 +16,23 @@ export default (products, initialItems, initialValues = {}) => {
 
     return {
         products: availableProducts,
+        customerSearchUrl,
+        quickCustomerUrl,
+        csrfToken,
+        selectedCustomer: initialCustomer,
+        customerId: initialCustomer ? String(initialCustomer.id) : '',
+        customerQuery: '',
+        customerResults: [],
+        customerOpen: false,
+        customerLoading: false,
+        customerSearchError: '',
+        customerSearchSequence: 0,
+        customerModalOpen: false,
+        quickCustomer: { nama: '', telepon: '', alamat: '' },
+        quickCustomerErrors: {},
+        quickCustomerMessage: '',
+        duplicateCustomer: null,
+        quickCustomerSubmitting: false,
         items: (Array.isArray(initialItems) ? initialItems : []).map((item, index) => {
             const product = availableProducts.find((candidate) => candidate.id === Number(item.product_id));
             const requestedQuantity = Number(item.qty ?? 1);
@@ -44,6 +69,109 @@ export default (products, initialItems, initialValues = {}) => {
             return this.products
                 .filter((product) => `${product.nama} ${product.sku}`.toLocaleLowerCase('id-ID').includes(term))
                 .slice(0, 10);
+        },
+
+        async cariPelanggan() {
+            const term = this.customerQuery.trim();
+            const sequence = ++this.customerSearchSequence;
+            this.customerSearchError = '';
+            this.customerOpen = true;
+
+            if (!term) {
+                this.customerResults = [];
+                this.customerLoading = false;
+                return;
+            }
+
+            this.customerLoading = true;
+
+            try {
+                const response = await fetch(`${this.customerSearchUrl}?q=${encodeURIComponent(term)}`, {
+                    headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                });
+                if (!response.ok) {
+                    throw new Error('Pencarian pelanggan gagal. Silakan coba lagi.');
+                }
+
+                const result = await response.json();
+                if (sequence === this.customerSearchSequence) {
+                    this.customerResults = result.data;
+                }
+            } catch (error) {
+                if (sequence === this.customerSearchSequence) {
+                    this.customerSearchError = error.message || 'Pencarian pelanggan gagal. Silakan coba lagi.';
+                    this.customerResults = [];
+                }
+            } finally {
+                if (sequence === this.customerSearchSequence) {
+                    this.customerLoading = false;
+                }
+            }
+        },
+
+        pilihPelanggan(customer) {
+            this.selectedCustomer = customer;
+            this.customerId = customer ? String(customer.id) : '';
+            this.customerQuery = '';
+            this.customerResults = [];
+            this.customerOpen = false;
+            this.customerSearchError = '';
+        },
+
+        bukaModalPelanggan() {
+            this.quickCustomer = { nama: '', telepon: '', alamat: '' };
+            this.quickCustomerErrors = {};
+            this.quickCustomerMessage = '';
+            this.duplicateCustomer = null;
+            this.customerModalOpen = true;
+        },
+
+        async buatPelangganCepat() {
+            if (this.quickCustomerSubmitting) {
+                return;
+            }
+
+            this.quickCustomerSubmitting = true;
+            this.quickCustomerErrors = {};
+            this.quickCustomerMessage = '';
+            this.duplicateCustomer = null;
+
+            try {
+                const response = await fetch(this.quickCustomerUrl, {
+                    method: 'POST',
+                    headers: {
+                        Accept: 'application/json',
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': this.csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify(this.quickCustomer),
+                });
+                const result = await response.json();
+
+                if (response.status === 409 && result.duplicate) {
+                    this.duplicateCustomer = result.customer;
+                    this.quickCustomerMessage = result.message;
+                    return;
+                }
+
+                if (response.status === 422) {
+                    this.quickCustomerErrors = result.errors || {};
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error(result.message || 'Pelanggan gagal disimpan. Silakan coba lagi.');
+                }
+
+                this.pilihPelanggan(result.customer);
+                this.customerModalOpen = false;
+                this.quickCustomer = { nama: '', telepon: '', alamat: '' };
+            } catch (error) {
+                this.quickCustomerMessage = error.message || 'Pelanggan gagal disimpan. Silakan coba lagi.';
+            } finally {
+                this.quickCustomerSubmitting = false;
+            }
         },
 
         get subtotal() {

@@ -41,14 +41,24 @@ class SaleController extends Controller
     {
         abort_unless($request->user()->can('penjualan.kelola'), 403);
 
-        $customers = Customer::query()->orderBy('nama')->pluck('nama', 'id');
+        $selectedCustomer = old('customer_id')
+            ? Customer::query()->where('aktif', true)->find(old('customer_id'))
+            : null;
+        $customerSearchUrl = route('customers.search');
+        $quickCustomerUrl = route('customers.quick-store');
         $products = Product::query()
             ->where('aktif', true)
             ->orderBy('nama')
             ->get(['id', 'sku', 'nama', 'harga_jual', 'stok']);
         $defaultTaxRate = (float) $storeSettingsService->get('persentase_pajak_default');
 
-        return view('sales.create', compact('customers', 'products', 'defaultTaxRate'));
+        return view('sales.create', compact(
+            'selectedCustomer',
+            'customerSearchUrl',
+            'quickCustomerUrl',
+            'products',
+            'defaultTaxRate',
+        ));
     }
 
     public function store(StoreSaleRequest $request, PenjualanService $penjualanService): RedirectResponse

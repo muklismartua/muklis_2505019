@@ -93,8 +93,8 @@ class PenjualanService
             }
 
             if (
-                $paymentMethod === Sale::PAYMENT_TEMPO
-                && ! Customer::query()->whereKey($data['customer_id'])->exists()
+                ! empty($data['customer_id'])
+                && ! Customer::query()->whereKey($data['customer_id'])->where('aktif', true)->exists()
             ) {
                 throw ValidationException::withMessages([
                     'customer_id' => 'Pelanggan yang dipilih tidak ditemukan.',
