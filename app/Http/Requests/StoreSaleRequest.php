@@ -15,7 +15,7 @@ class StoreSaleRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'customer_id' => ['nullable', 'integer', 'exists:customers,id'],
+            'customer_id' => ['nullable', 'required_if:metode_pembayaran,tempo', 'integer', 'exists:customers,id'],
             'tanggal' => ['required', 'date'],
             'diskon' => ['nullable', 'integer', 'min:0'],
             'pajak' => ['nullable', 'integer', 'min:0'],
@@ -40,6 +40,7 @@ class StoreSaleRequest extends FormRequest
             'items.*.product_id.exists' => 'Produk yang dipilih tidak tersedia.',
             'items.*.qty.min' => 'Jumlah produk minimal 1.',
             'pajak_persen.between' => 'Persentase pajak harus antara 0 sampai 100.',
+            'customer_id.required_if' => 'Pelanggan wajib dipilih untuk penjualan dengan pembayaran tempo.',
         ];
     }
 }

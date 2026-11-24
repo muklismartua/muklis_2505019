@@ -17,7 +17,7 @@ class StockAdjustmentController extends Controller
         abort_unless($request->user()->can('stok.lihat'), 403);
 
         $adjustments = StockAdjustment::query()
-            ->with(['product', 'user'])
+            ->with(['product', 'user', 'stockMovement'])
             ->latest('created_at')
             ->paginate(15);
 

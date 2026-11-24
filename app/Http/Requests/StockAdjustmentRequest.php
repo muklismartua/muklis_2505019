@@ -19,4 +19,13 @@ class StockAdjustmentRequest extends FormRequest
             'alasan' => ['required', 'string', 'max:2000'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'product_id.required' => 'Pilih produk terlebih dahulu.',
+            'qty_fisik.required' => 'Jumlah fisik wajib diisi.',
+            'alasan.required' => 'Alasan penyesuaian wajib diisi.',
+        ];
+    }
 }

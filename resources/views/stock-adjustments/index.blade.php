@@ -13,10 +13,17 @@
         @endcan
     </div>
 
-    <x-ui.table :headers="['Tanggal', 'Produk', 'Stok sistem', 'Stok fisik', 'Selisih', 'Alasan', 'Pengguna']" :paginator="$adjustments">
+    <x-ui.table :headers="['Tanggal', 'Jenis', 'Produk', 'Stok sistem', 'Stok setelah', 'Selisih', 'Alasan', 'Pengguna']" :paginator="$adjustments">
         @forelse ($adjustments as $adjustment)
             <tr>
                 <td class="whitespace-nowrap px-5 py-4">{{ $adjustment->created_at->format('d/m/Y H:i') }}</td>
+                <td class="whitespace-nowrap px-5 py-4">
+                    {{ match ($adjustment->stockMovement?->tipe) {
+                        'masuk' => 'Tambah manual',
+                        'keluar' => 'Kurangi manual',
+                        default => 'Stok opname',
+                    } }}
+                </td>
                 <td class="whitespace-nowrap px-5 py-4">
                     <a href="{{ route('stock.show', $adjustment->product) }}" class="font-medium text-indigo-700 hover:underline">{{ $adjustment->product->nama }}</a>
                     <p class="mt-1 text-xs text-slate-500">{{ $adjustment->product->sku }}</p>
@@ -30,7 +37,7 @@
                 <td class="whitespace-nowrap px-5 py-4">{{ $adjustment->user?->name ?? '—' }}</td>
             </tr>
         @empty
-            <tr><td colspan="7" class="px-5 py-10 text-center text-slate-500">Belum ada data stok opname.</td></tr>
+            <tr><td colspan="8" class="px-5 py-10 text-center text-slate-500">Belum ada riwayat perubahan stok.</td></tr>
         @endforelse
     </x-ui.table>
 @endsection

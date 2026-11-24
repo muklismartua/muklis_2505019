@@ -13,6 +13,7 @@ use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\StockManualController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SettingsController;
 use App\Http\Controllers\UserManagementController;
@@ -67,6 +68,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/stock/low-stock', [StockMovementController::class, 'lowStock'])
         ->middleware('permission:stok.lihat')
         ->name('stock.low-stock');
+    Route::get('/stock-manuals', [StockManualController::class, 'index'])
+        ->middleware('permission:stok.lihat|stok.kelola')
+        ->name('stock-manuals.index');
+    Route::get('/stock-manuals/create', [StockManualController::class, 'create'])
+        ->middleware('permission:stok.kelola')
+        ->name('stock-manuals.create');
+    Route::post('/stock-manuals', [StockManualController::class, 'store'])
+        ->middleware('permission:stok.kelola')
+        ->name('stock-manuals.store');
     Route::get('/stock/{product}', [StockMovementController::class, 'show'])
         ->middleware('permission:stok.lihat')
         ->name('stock.show');

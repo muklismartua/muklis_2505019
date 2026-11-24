@@ -11,7 +11,10 @@
                 <p class="mt-1 text-sm text-slate-600">{{ $product->sku }} · Stok saat ini: {{ number_format($product->stok, 0, ',', '.') }}</p>
             </div>
             @can('stok.kelola')
-                <a href="{{ route('stock-adjustments.create', ['product_id' => $product->id]) }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Buat stok opname</a>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('stock-manuals.create', ['product_id' => $product->id]) }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Tambah/Kurang Stok</a>
+                    <a href="{{ route('stock-adjustments.create', ['product_id' => $product->id]) }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Buat stok opname</a>
+                </div>
             @endcan
         </div>
     </div>

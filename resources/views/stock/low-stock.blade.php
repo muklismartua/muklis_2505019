@@ -11,7 +11,7 @@
         </div>
     </div>
 
-    <x-ui.table :headers="['Produk', 'Kategori', 'Stok', 'Stok minimum', 'Status']" :paginator="$products">
+    <x-ui.table :headers="['Produk', 'Kategori', 'Stok', 'Stok minimum', 'Status', 'Aksi']" :paginator="$products">
         @forelse ($products as $product)
             <tr>
                 <td class="px-5 py-4">
@@ -24,9 +24,16 @@
                 <td class="whitespace-nowrap px-5 py-4">
                     <span class="inline-flex rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">Stok menipis</span>
                 </td>
+                <td class="whitespace-nowrap px-5 py-4">
+                    @can('stok.kelola')
+                        <a href="{{ route('stock-manuals.create', ['product_id' => $product->id]) }}" class="font-medium text-indigo-700 hover:underline">Tambah/Kurang Stok</a>
+                    @else
+                        —
+                    @endcan
+                </td>
             </tr>
         @empty
-            <tr><td colspan="5" class="px-5 py-10 text-center text-slate-500">Tidak ada produk dengan stok menipis.</td></tr>
+            <tr><td colspan="6" class="px-5 py-10 text-center text-slate-500">Tidak ada produk dengan stok menipis.</td></tr>
         @endforelse
     </x-ui.table>
 @endsection

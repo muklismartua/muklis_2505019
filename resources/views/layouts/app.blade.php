@@ -99,6 +99,9 @@
                                     <a href="{{ route('stock.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('stock.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('stock.*')])>Kartu Stok</a>
                                     <a href="{{ route('stock-adjustments.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('stock-adjustments.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('stock-adjustments.*')])>Stok Opname</a>
                                 @endcan
+                                @can('stok.kelola')
+                                    <a href="{{ route('stock-manuals.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('stock-manuals.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('stock-manuals.*')])>Stok Manual</a>
+                                @endcan
                                 @cannot('stok.lihat')
                                     @can('stok.kelola')
                                         <a href="{{ route('stock-adjustments.create') }}" @click="sidebarOpen = false" class="block rounded-md px-3 py-2 text-slate-700 hover:bg-slate-100">Stok Opname</a>

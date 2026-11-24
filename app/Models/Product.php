@@ -57,6 +57,11 @@ class Product extends Model
         return $this->hasMany(StockMovement::class);
     }
 
+    public function stockManuals(): HasMany
+    {
+        return $this->hasMany(StockManual::class);
+    }
+
     public function purchaseItems(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);

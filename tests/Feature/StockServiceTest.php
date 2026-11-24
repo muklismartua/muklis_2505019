@@ -56,7 +56,7 @@ class StockServiceTest extends TestCase
     public function test_kurangi_throws_and_leaves_stock_unchanged_when_stock_is_insufficient(): void
     {
         try {
-            $this->stockService->kurangi($this->product, 11, null, null, $this->user);
+            $this->stockService->kurangi($this->product, 11, null, 'Pengurangan stok', $this->user);
             $this->fail('Expected an insufficient-stock validation exception.');
         } catch (ValidationException $exception) {
             $this->assertArrayHasKey('items', $exception->errors());
@@ -93,4 +93,5 @@ class StockServiceTest extends TestCase
 
         $this->stockService->tambah($this->product, 0);
     }
+
 }

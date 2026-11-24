@@ -52,7 +52,16 @@
         @csrf
 
         <section class="grid gap-4 rounded-lg border border-slate-200 bg-white p-5 sm:grid-cols-2">
-            <x-ui.select name="customer_id" label="Pelanggan (opsional)" :options="$customers" :selected="old('customer_id')" placeholder="Pelanggan umum" />
+            <div>
+                <x-ui.select
+                    name="customer_id"
+                    label="Pelanggan (wajib untuk tempo)"
+                    :options="$customers"
+                    :selected="old('customer_id')"
+                    placeholder="Pelanggan umum"
+                    x-bind:required="metodePembayaran === 'tempo'"
+                />
+            </div>
             <x-ui.input name="tanggal" label="Tanggal penjualan" type="date" :value="old('tanggal', now()->toDateString())" required />
             <x-ui.select
                 name="metode_pembayaran"

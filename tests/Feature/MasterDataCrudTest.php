@@ -111,7 +111,9 @@ class MasterDataCrudTest extends TestCase
 
     public function test_product_crud_filters_and_never_accepts_manual_stock_changes(): void
     {
-        Storage::fake('public');
+        $fakeDisk = 'public-product-crud-'.bin2hex(random_bytes(8));
+        Storage::fake($fakeDisk);
+        Storage::set('public', Storage::disk($fakeDisk));
         $category = Category::factory()->create();
         $unit = Unit::factory()->create();
         $payload = [

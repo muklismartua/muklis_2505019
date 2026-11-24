@@ -76,6 +76,9 @@ class StockManagementTest extends TestCase
 
         $this->get(route('stock.index'))->assertForbidden();
         $this->get(route('stock-adjustments.index'))->assertForbidden();
+        $this->get(route('stock-manuals.index'))->assertForbidden();
+        $this->get(route('stock-manuals.create'))->assertForbidden();
+        $this->post(route('stock-manuals.store'), [])->assertForbidden();
         $this->post(route('stock-adjustments.store'), [])->assertForbidden();
     }
 }

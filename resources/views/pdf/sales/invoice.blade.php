@@ -40,6 +40,9 @@
         <tr><td>Pajak</td><td class="right">{{ rupiah($sale->pajak) }}</td></tr>
         <tr class="grand-total"><td>Total</td><td class="right">{{ rupiah($sale->total) }}</td></tr>
         <tr><td>Bayar</td><td class="right">{{ rupiah($sale->bayar) }}</td></tr>
+        @if ($sale->receivable)
+            <tr><td>Sisa piutang</td><td class="right">{{ rupiah($sale->receivable->sisa) }}</td></tr>
+        @endif
         <tr><td>Kembalian</td><td class="right">{{ rupiah($sale->kembalian) }}</td></tr>
     </table>
 

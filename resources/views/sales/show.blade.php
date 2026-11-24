@@ -66,6 +66,9 @@
             <div><dt class="text-slate-500">Total</dt><dd class="text-base font-bold">Rp {{ number_format($sale->total, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Bayar</dt><dd class="font-medium">Rp {{ number_format($sale->bayar, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Kembalian</dt><dd class="font-medium">Rp {{ number_format($sale->kembalian, 0, ',', '.') }}</dd></div>
+            @if ($sale->receivable)
+                <div><dt class="text-slate-500">Sisa piutang</dt><dd class="font-semibold text-amber-700">Rp {{ number_format($sale->receivable->sisa, 0, ',', '.') }} ({{ str_replace('_', ' ', ucfirst($sale->receivable->status)) }})</dd></div>
+            @endif
             <div class="sm:col-span-2"><dt class="text-slate-500">Catatan</dt><dd class="whitespace-pre-line font-medium">{{ $sale->catatan ?: '—' }}</dd></div>
         </dl>
     </section>

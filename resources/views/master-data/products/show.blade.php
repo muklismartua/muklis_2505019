@@ -10,9 +10,14 @@
                 <h1 class="text-2xl font-bold">{{ $product->nama }}</h1>
                 <p class="mt-1 text-sm text-slate-600">{{ $product->sku }}</p>
             </div>
-            @can('produk.kelola')
-                <a href="{{ route('products.edit', $product) }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Edit produk</a>
-            @endcan
+            <div class="flex flex-wrap gap-2">
+                @can('stok.kelola')
+                    <a href="{{ route('stock-manuals.create', ['product_id' => $product->id]) }}" class="rounded-md border border-indigo-300 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-50">Tambah/Kurang Stok</a>
+                @endcan
+                @can('produk.kelola')
+                    <a href="{{ route('products.edit', $product) }}" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-700">Edit produk</a>
+                @endcan
+            </div>
         </div>
     </div>
 

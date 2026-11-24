@@ -100,12 +100,15 @@ class SaleManagementTest extends TestCase
     public function test_sale_number_increments_daily_and_tempo_can_be_partially_paid(): void
     {
         $product = Product::factory()->create(['harga_jual' => 2500, 'stok' => 3]);
+        $customer = Customer::factory()->create();
         $this->createSale($product, 1, [
             'metode_pembayaran' => 'tempo',
+            'customer_id' => $customer->id,
             'bayar' => 1000,
         ]);
         $this->createSale($product, 1, [
             'metode_pembayaran' => 'tempo',
+            'customer_id' => $customer->id,
             'bayar' => 0,
         ]);
 
@@ -114,6 +117,60 @@ class SaleManagementTest extends TestCase
         $this->assertSame('PJ-'.now()->format('Ymd').'-0002', $sales[1]->nomor);
         $this->assertSame(0, $sales[0]->kembalian);
         $this->assertSame(0, $sales[1]->kembalian);
+        $this->assertDatabaseHas('receivables', [
+            'sale_id' => $sales[0]->id,
+            'customer_id' => $customer->id,
+            'total' => 2500,
+            'terbayar' => 1000,
+            'sisa' => 1500,
+            'status' => 'sebagian',
+        ]);
+        $this->assertDatabaseHas('receivables', [
+            'sale_id' => $sales[1]->id,
+            'customer_id' => $customer->id,
+            'sisa' => 2500,
+            'status' => 'belum_lunas',
+        ]);
+        $this->get(route('sales.show', $sales[0]))
+            ->assertOk()
+            ->assertSee('Sisa piutang')
+            ->assertSee('1.500');
+        $this->get(route('sales.pdf', $sales[0]))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+    }
+
+    public function test_tempo_sale_requires_a_customer_and_cancellation_closes_its_receivable(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 2500, 'stok' => 3]);
+        $base = [
+            'tanggal' => now()->toDateString(),
+            'diskon' => 0,
+            'pajak' => 0,
+            'bayar' => 500,
+            'metode_pembayaran' => 'tempo',
+            'items' => [['product_id' => $product->id, 'qty' => 1, 'diskon' => 0]],
+        ];
+
+        $this->from(route('sales.create'))
+            ->post(route('sales.store'), $base)
+            ->assertRedirect(route('sales.create'))
+            ->assertSessionHasErrors('customer_id');
+        $this->assertDatabaseCount('sales', 0);
+
+        $customer = Customer::factory()->create();
+        $sale = $this->createSale($product, 1, [
+            'customer_id' => $customer->id,
+            'metode_pembayaran' => 'tempo',
+            'bayar' => 500,
+        ]);
+
+        $this->patch(route('sales.cancel', $sale))->assertRedirect();
+        $this->assertDatabaseHas('receivables', [
+            'sale_id' => $sale->id,
+            'sisa' => 0,
+            'status' => 'batal',
+        ]);
     }
 
     public function test_percentage_tax_is_calculated_on_the_discounted_subtotal_on_the_server(): void

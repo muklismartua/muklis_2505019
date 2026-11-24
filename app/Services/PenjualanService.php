@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Models\Product;
+use App\Models\Customer;
+use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -82,6 +84,22 @@ class PenjualanService
             $discount = (int) ($data['diskon'] ?? 0);
             $payment = (int) $data['bayar'];
             $taxRate = array_key_exists('pajak_persen', $data) ? (float) $data['pajak_persen'] : null;
+            $paymentMethod = $data['metode_pembayaran'];
+
+            if ($paymentMethod === Sale::PAYMENT_TEMPO && empty($data['customer_id'])) {
+                throw ValidationException::withMessages([
+                    'customer_id' => 'Pelanggan wajib dipilih untuk penjualan dengan pembayaran tempo.',
+                ]);
+            }
+
+            if (
+                $paymentMethod === Sale::PAYMENT_TEMPO
+                && ! Customer::query()->whereKey($data['customer_id'])->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'customer_id' => 'Pelanggan yang dipilih tidak ditemukan.',
+                ]);
+            }
 
             if ($discount < 0) {
                 throw ValidationException::withMessages([
@@ -119,8 +137,6 @@ class PenjualanService
             }
 
             $total = $this->add($totalBeforeTax, $tax, 'Total penjualan melebihi batas yang dapat dihitung.');
-            $paymentMethod = $data['metode_pembayaran'];
-
             if ($paymentMethod !== Sale::PAYMENT_TEMPO && $payment < $total) {
                 throw ValidationException::withMessages([
                     'bayar' => 'Jumlah bayar tidak mencukupi total penjualan.',
@@ -173,6 +189,22 @@ class PenjualanService
                 );
             }
 
+            if ($paymentMethod === Sale::PAYMENT_TEMPO) {
+                $remaining = $total - min($payment, $total);
+                Receivable::query()->create([
+                    'sale_id' => $sale->id,
+                    'customer_id' => $sale->customer_id,
+                    'total' => $total,
+                    'terbayar' => min($payment, $total),
+                    'sisa' => $remaining,
+                    'status' => match (true) {
+                        $remaining === 0 => Receivable::STATUS_PAID,
+                        $payment > 0 => Receivable::STATUS_PARTIAL,
+                        default => Receivable::STATUS_UNPAID,
+                    },
+                ]);
+            }
+
             $this->activityLogService->catat(
                 'penjualan.dibuat',
                 "Penjualan {$sale->nomor} berhasil dibuat.",
@@ -180,7 +212,7 @@ class PenjualanService
                 $user,
             );
 
-            return $sale->load(['items.product', 'customer', 'user']);
+            return $sale->load(['items.product', 'customer', 'user', 'receivable']);
         });
     }
 
@@ -224,6 +256,10 @@ class PenjualanService
             }
 
             $sale->update(['status' => Sale::STATUS_CANCELLED]);
+            $sale->receivable?->update([
+                'sisa' => 0,
+                'status' => Receivable::STATUS_CANCELLED,
+            ]);
             $this->activityLogService->catat(
                 'penjualan.dibatalkan',
                 "Penjualan {$sale->nomor} dibatalkan.",
@@ -231,7 +267,7 @@ class PenjualanService
                 $user,
             );
 
-            return $sale->load(['items.product', 'customer', 'user']);
+            return $sale->load(['items.product', 'customer', 'user', 'receivable']);
         });
     }
 

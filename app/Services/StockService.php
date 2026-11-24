@@ -24,6 +24,7 @@ class StockService
         ?User $user = null,
     ): StockMovement {
         $this->validatePositiveQuantity($qty);
+        $this->validateKeterangan($keterangan);
 
         return DB::transaction(function () use ($product, $qty, $referensi, $keterangan, $user): StockMovement {
             $lockedProduct = Product::query()->withTrashed()->lockForUpdate()->findOrFail($product->id);
@@ -52,6 +53,7 @@ class StockService
         ?User $user = null,
     ): StockMovement {
         $this->validatePositiveQuantity($qty);
+        $this->validateKeterangan($keterangan);
 
         return DB::transaction(function () use ($product, $qty, $referensi, $keterangan, $user): StockMovement {
             $lockedProduct = Product::query()->withTrashed()->lockForUpdate()->findOrFail($product->id);
@@ -149,6 +151,15 @@ class StockService
         if ($qty <= 0) {
             throw ValidationException::withMessages([
                 'qty' => 'Jumlah pergerakan stok harus lebih besar dari nol.',
+            ]);
+        }
+    }
+
+    private function validateKeterangan(?string $keterangan): void
+    {
+        if (trim((string) $keterangan) === '') {
+            throw ValidationException::withMessages([
+                'keterangan' => 'Alasan pergerakan stok wajib diisi.',
             ]);
         }
     }

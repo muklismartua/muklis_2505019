@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Models\Purchase;
 use App\Models\Sale;
+use App\Models\StockManual;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 class NomorTransaksiService
@@ -26,8 +28,13 @@ class NomorTransaksiService
         );
     }
 
+    public function nomorStokManual(): string
+    {
+        return $this->nomorHarian(StockManual::class, 'SM');
+    }
+
     /**
-     * @param  class-string<Purchase|Sale>  $modelClass
+     * @param  class-string<Model>  $modelClass
      */
     private function nomorHarian(string $modelClass, string $kode): string
     {
