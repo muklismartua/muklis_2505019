@@ -72,8 +72,10 @@ class UserManagementTest extends TestCase
         $owner->assignRole('owner');
         $this->assertTrue($owner->can('dashboard.lihat'));
         $this->assertTrue($owner->can('laporan.lihat'));
+        $this->assertTrue($owner->can('piutang.lihat'));
+        $this->assertFalse($owner->can('piutang.kelola'));
         $this->assertFalse($owner->can('penjualan.lihat'));
-        $this->assertSame(2, $owner->getAllPermissions()->count());
+        $this->assertSame(3, $owner->getAllPermissions()->count());
 
         $warehouseStaff = User::factory()->create();
         $warehouseStaff->assignRole('staf_gudang');
@@ -85,6 +87,7 @@ class UserManagementTest extends TestCase
         $cashier->assignRole('kasir');
         $this->assertTrue($cashier->can('produk.lihat'));
         $this->assertTrue($cashier->can('pelanggan.lihat'));
+        $this->assertTrue($cashier->can('piutang.kelola'));
         $this->assertFalse($cashier->can('pembelian.kelola'));
     }
 

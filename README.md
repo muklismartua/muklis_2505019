@@ -73,6 +73,7 @@ Registrasi publik dinonaktifkan. Admin dapat mengelola pengguna dan role dari me
 - Kartu stok, stok opname, dan modul stok manual multi-item. Penambahan/pengurangan manual dicatat per item dengan nomor `SM-YYYYMMDD-####`, alasan terpilih, pengguna, tanggal, serta keterangan opsional; semua mutasi dilakukan oleh `StockService`.
 - Transaksi pembelian dan penjualan multi-item, validasi stok di server, pembatalan transaksi, dan nomor transaksi harian dengan prefix yang dapat diatur.
 - Pembayaran penjualan tempo wajib memilih pelanggan; sisa pembayaran disimpan di tabel piutang dan ditampilkan pada detail transaksi serta dokumen penjualan.
+- Pengelolaan piutang per pelanggan dengan jatuh tempo, cicilan/pelunasan bernomor, sinkronisasi status pembayaran penjualan, dan validasi batas hutang pelanggan.
 - Invoice penjualan PDF, nota penjualan 80 mm, dan bukti pembelian PDF.
 - Dashboard ringkasan, grafik penjualan, laporan penjualan/pembelian/stok/mutasi/laba-rugi dengan ekspor Excel dan PDF.
 - Log aktivitas login, perubahan master data, transaksi, dan stok opname; hanya admin yang dapat mengaksesnya.

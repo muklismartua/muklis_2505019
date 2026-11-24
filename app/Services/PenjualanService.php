@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\Product;
 use App\Models\Customer;
-use App\Models\Receivable;
 use App\Models\Sale;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -16,6 +15,7 @@ class PenjualanService
         private readonly NomorTransaksiService $nomorTransaksiService,
         private readonly StockService $stockService,
         private readonly ActivityLogService $activityLogService,
+        private readonly PiutangService $piutangService,
     ) {}
 
     /**
@@ -27,6 +27,7 @@ class PenjualanService
      *     pajak_persen?: int|float|string,
      *     bayar: int|string,
      *     metode_pembayaran: string,
+     *     jatuh_tempo?: ?string,
      *     catatan?: ?string,
      *     items: list<array{product_id: int|string, qty: int|string, diskon?: int|string}>
      * }  $data
@@ -149,6 +150,15 @@ class PenjualanService
                 ]);
             }
 
+            $paidTowardTotal = min($payment, $total);
+            $remaining = $total - $paidTowardTotal;
+            $dueDate = $paymentMethod === Sale::PAYMENT_TEMPO ? ($data['jatuh_tempo'] ?? null) : null;
+
+            if ($paymentMethod === Sale::PAYMENT_TEMPO && $remaining > 0) {
+                $customer = Customer::query()->findOrFail($data['customer_id']);
+                $this->piutangService->cekBatasHutang($customer, $remaining);
+            }
+
             $sale = Sale::query()->create([
                 'nomor' => $this->nomorTransaksiService->nomorPenjualan(),
                 'customer_id' => $data['customer_id'] ?? null,
@@ -162,6 +172,10 @@ class PenjualanService
                 'kembalian' => max($payment - $total, 0),
                 'metode_pembayaran' => $paymentMethod,
                 'status' => Sale::STATUS_COMPLETED,
+                'status_pembayaran' => $remaining === 0 ? 'lunas' : 'belum_lunas',
+                'jatuh_tempo' => $dueDate,
+                'total_dibayar' => $paidTowardTotal,
+                'sisa' => $remaining,
                 'catatan' => $data['catatan'] ?? null,
             ]);
 
@@ -190,19 +204,7 @@ class PenjualanService
             }
 
             if ($paymentMethod === Sale::PAYMENT_TEMPO) {
-                $remaining = $total - min($payment, $total);
-                Receivable::query()->create([
-                    'sale_id' => $sale->id,
-                    'customer_id' => $sale->customer_id,
-                    'total' => $total,
-                    'terbayar' => min($payment, $total),
-                    'sisa' => $remaining,
-                    'status' => match (true) {
-                        $remaining === 0 => Receivable::STATUS_PAID,
-                        $payment > 0 => Receivable::STATUS_PARTIAL,
-                        default => Receivable::STATUS_UNPAID,
-                    },
-                ]);
+                $this->piutangService->buatDariPenjualan($sale, $paidTowardTotal, $dueDate);
             }
 
             $this->activityLogService->catat(
@@ -212,7 +214,7 @@ class PenjualanService
                 $user,
             );
 
-            return $sale->load(['items.product', 'customer', 'user', 'receivable']);
+            return $sale->refresh()->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
         });
     }
 
@@ -256,10 +258,7 @@ class PenjualanService
             }
 
             $sale->update(['status' => Sale::STATUS_CANCELLED]);
-            $sale->receivable?->update([
-                'sisa' => 0,
-                'status' => Receivable::STATUS_CANCELLED,
-            ]);
+            $this->piutangService->batalkanDariPenjualan($sale);
             $this->activityLogService->catat(
                 'penjualan.dibatalkan',
                 "Penjualan {$sale->nomor} dibatalkan.",
@@ -267,7 +266,7 @@ class PenjualanService
                 $user,
             );
 
-            return $sale->load(['items.product', 'customer', 'user', 'receivable']);
+            return $sale->refresh()->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
         });
     }
 

@@ -10,6 +10,7 @@ use App\Http\Controllers\MasterData\SupplierController;
 use App\Http\Controllers\MasterData\UnitController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PiutangController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SaleController;
 use App\Http\Controllers\StockAdjustmentController;
@@ -129,6 +130,15 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::post('/sales', [SaleController::class, 'store'])
         ->middleware('permission:penjualan.kelola')
         ->name('sales.store');
+    Route::get('/piutangs', [PiutangController::class, 'index'])
+        ->middleware('permission:piutang.lihat|piutang.kelola')
+        ->name('piutangs.index');
+    Route::get('/piutangs/{piutang}', [PiutangController::class, 'show'])
+        ->middleware('permission:piutang.lihat|piutang.kelola')
+        ->name('piutangs.show');
+    Route::post('/piutangs/{piutang}/pembayaran', [PiutangController::class, 'payment'])
+        ->middleware('permission:piutang.kelola')
+        ->name('piutangs.payments.store');
     Route::get('/sales/{sale}/pdf', [SaleController::class, 'pdf'])
         ->middleware('permission:penjualan.lihat|penjualan.kelola')
         ->name('sales.pdf');

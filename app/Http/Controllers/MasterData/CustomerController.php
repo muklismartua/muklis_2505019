@@ -8,8 +8,11 @@ use App\Http\Requests\StoreQuickCustomerRequest;
 use App\Http\Requests\UpdateCustomerRequest;
 use App\Models\Customer;
 use App\Services\CustomerService;
+use App\Services\PiutangService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
 
 class CustomerController extends LookupController
 {
@@ -79,6 +82,27 @@ class CustomerController extends LookupController
     public function update(UpdateCustomerRequest $request, string $customer): RedirectResponse
     {
         return $this->updateRecord($this->find($customer), $request->validated());
+    }
+
+    public function show(Request $request, string $record): View
+    {
+        $this->authorizePermission($request, 'lihat');
+
+        $customer = Customer::query()->findOrFail($record);
+        $canViewPiutang = $request->user()->canAny(['piutang.lihat', 'piutang.kelola']);
+        $piutangs = $canViewPiutang
+            ? $customer->piutangs()->with('sale')->latest('id')->paginate(10)
+            : collect();
+        $totalHutang = $canViewPiutang
+            ? app(PiutangService::class)->totalHutangPelanggan($customer)
+            : 0;
+
+        return view('master-data.customers.show', compact(
+            'customer',
+            'piutangs',
+            'totalHutang',
+            'canViewPiutang',
+        ));
     }
 
     /**

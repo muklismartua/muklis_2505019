@@ -32,6 +32,10 @@ class Sale extends Model
         'kembalian',
         'metode_pembayaran',
         'status',
+        'status_pembayaran',
+        'jatuh_tempo',
+        'total_dibayar',
+        'sisa',
         'catatan',
     ];
 
@@ -39,12 +43,15 @@ class Sale extends Model
     {
         return [
             'tanggal' => 'date',
+            'jatuh_tempo' => 'date',
             'subtotal' => 'integer',
             'diskon' => 'integer',
             'pajak' => 'integer',
             'total' => 'integer',
             'bayar' => 'integer',
             'kembalian' => 'integer',
+            'total_dibayar' => 'integer',
+            'sisa' => 'integer',
         ];
     }
 
@@ -66,5 +73,10 @@ class Sale extends Model
     public function receivable(): HasOne
     {
         return $this->hasOne(Receivable::class);
+    }
+
+    public function piutang(): HasOne
+    {
+        return $this->hasOne(Piutang::class);
     }
 }

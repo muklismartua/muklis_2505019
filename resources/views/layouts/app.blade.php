@@ -111,7 +111,7 @@
                         </div>
                     @endcanany
 
-                    @canany(['pembelian.lihat', 'pembelian.kelola', 'penjualan.lihat', 'penjualan.kelola'])
+                    @canany(['pembelian.lihat', 'pembelian.kelola', 'penjualan.lihat', 'penjualan.kelola', 'piutang.lihat', 'piutang.kelola'])
                         <div class="pt-2">
                             <button type="button" class="flex w-full items-center justify-between px-3 py-2 text-left font-semibold text-slate-500 hover:text-slate-800" @click="transactionsOpen = !transactionsOpen">
                                 <span>Transaksi</span>
@@ -125,6 +125,9 @@
                                 @endcanany
                                 @canany(['penjualan.lihat', 'penjualan.kelola'])
                                     <a href="{{ route('sales.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('sales.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('sales.*')])>Penjualan</a>
+                                @endcanany
+                                @canany(['piutang.lihat', 'piutang.kelola'])
+                                    <a href="{{ route('piutangs.index') }}" @click="sidebarOpen = false" @class(['block rounded-md px-3 py-2', 'bg-indigo-50 font-medium text-indigo-700' => request()->routeIs('piutangs.*'), 'text-slate-700 hover:bg-slate-100' => ! request()->routeIs('piutangs.*')])>Piutang</a>
                                 @endcanany
                             </div>
                         </div>

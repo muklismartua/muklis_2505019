@@ -3,6 +3,7 @@
 @section('title', 'Detail Penjualan')
 
 @section('content')
+    @php($totalDibayar = $sale->total_dibayar ?? min($sale->bayar, $sale->total))
     <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
             <a href="{{ route('sales.index') }}" class="text-sm font-medium text-indigo-700 hover:underline">&larr; Kembali ke penjualan</a>
@@ -59,15 +60,20 @@
         </div>
         <dl class="grid gap-3 border-t border-slate-200 bg-slate-50 px-5 py-4 text-sm sm:grid-cols-2">
             <div><dt class="text-slate-500">Metode pembayaran</dt><dd class="font-medium">{{ ucfirst($sale->metode_pembayaran) }}</dd></div>
+            <div><dt class="text-slate-500">Status pembayaran</dt><dd class="font-medium">{{ str_replace('_', ' ', ucfirst($sale->status_pembayaran)) }}</dd></div>
+            @if ($sale->jatuh_tempo)
+                <div><dt class="text-slate-500">Jatuh tempo</dt><dd class="font-medium">{{ $sale->jatuh_tempo->format('d/m/Y') }}</dd></div>
+            @endif
             <div><dt class="text-slate-500">Dibuat oleh</dt><dd class="font-medium">{{ $sale->user?->name ?? '—' }}</dd></div>
             <div><dt class="text-slate-500">Subtotal item</dt><dd class="font-medium">Rp {{ number_format($sale->subtotal, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Diskon transaksi</dt><dd class="font-medium">Rp {{ number_format($sale->diskon, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Pajak</dt><dd class="font-medium">Rp {{ number_format($sale->pajak, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Total</dt><dd class="text-base font-bold">Rp {{ number_format($sale->total, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Bayar</dt><dd class="font-medium">Rp {{ number_format($sale->bayar, 0, ',', '.') }}</dd></div>
+            <div><dt class="text-slate-500">Total dibayar</dt><dd class="font-medium">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</dd></div>
             <div><dt class="text-slate-500">Kembalian</dt><dd class="font-medium">Rp {{ number_format($sale->kembalian, 0, ',', '.') }}</dd></div>
-            @if ($sale->receivable)
-                <div><dt class="text-slate-500">Sisa piutang</dt><dd class="font-semibold text-amber-700">Rp {{ number_format($sale->receivable->sisa, 0, ',', '.') }} ({{ str_replace('_', ' ', ucfirst($sale->receivable->status)) }})</dd></div>
+            @if ($sale->piutang && $sale->sisa > 0)
+                <div><dt class="text-slate-500">Sisa piutang</dt><dd class="font-semibold text-amber-700">Rp {{ number_format($sale->sisa, 0, ',', '.') }} ({{ str_replace('_', ' ', ucfirst($sale->piutang->status)) }})</dd></div>
             @endif
             <div class="sm:col-span-2"><dt class="text-slate-500">Catatan</dt><dd class="whitespace-pre-line font-medium">{{ $sale->catatan ?: '—' }}</dd></div>
         </dl>

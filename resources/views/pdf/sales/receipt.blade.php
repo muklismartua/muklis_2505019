@@ -9,6 +9,7 @@
 @section('body_class', 'receipt')
 
 @section('document')
+    @php($totalDibayar = $sale->total_dibayar ?? min($sale->bayar, $sale->total))
     <h2 class="document-title">NOTA PENJUALAN</h2>
 
     <table class="meta">
@@ -48,8 +49,9 @@
         <tr><td>Pajak</td><td class="right">{{ rupiah($sale->pajak) }}</td></tr>
         <tr class="grand-total"><td>Total</td><td class="right">{{ rupiah($sale->total) }}</td></tr>
         <tr><td>Bayar</td><td class="right">{{ rupiah($sale->bayar) }}</td></tr>
-        @if ($sale->receivable)
-            <tr><td>Sisa piutang</td><td class="right">{{ rupiah($sale->receivable->sisa) }}</td></tr>
+        <tr><td>Total dibayar</td><td class="right">{{ rupiah($totalDibayar) }}</td></tr>
+        @if ($sale->piutang && $sale->sisa > 0)
+            <tr><td>Sisa piutang</td><td class="right">{{ rupiah($sale->sisa) }}</td></tr>
         @endif
         <tr><td>Kembalian</td><td class="right">{{ rupiah($sale->kembalian) }}</td></tr>
     </table>

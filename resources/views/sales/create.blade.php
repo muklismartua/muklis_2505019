@@ -122,6 +122,14 @@
                 x-model="metodePembayaran"
                 required
             />
+            <div x-cloak x-show="metodePembayaran === 'tempo'">
+                <x-ui.input
+                    name="jatuh_tempo"
+                    label="Tanggal jatuh tempo"
+                    type="date"
+                    :value="old('jatuh_tempo')"
+                />
+            </div>
             <x-ui.input name="bayar" label="Bayar (rupiah)" type="number" min="0" step="1" :value="old('bayar', 0)" x-model.number="bayar" required />
             <x-ui.input name="diskon" label="Diskon transaksi (rupiah)" type="number" min="0" step="1" :value="old('diskon', 0)" x-model.number="diskon" />
             <x-ui.input

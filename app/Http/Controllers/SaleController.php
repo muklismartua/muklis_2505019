@@ -73,7 +73,7 @@ class SaleController extends Controller
     public function show(Request $request, Sale $sale): View
     {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
-        $sale->load(['items.product', 'customer', 'user', 'receivable']);
+        $sale->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
 
         return view('sales.show', compact('sale'));
     }
@@ -81,7 +81,7 @@ class SaleController extends Controller
     public function pdf(Request $request, Sale $sale, StoreSettingsService $storeSettingsService): Response
     {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
-        $sale->load(['items.product', 'customer', 'user', 'receivable']);
+        $sale->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
         $store = $storeSettingsService->forDocument();
         $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
 
@@ -97,7 +97,7 @@ class SaleController extends Controller
     ): Response
     {
         abort_unless($request->user()->canAny(['penjualan.lihat', 'penjualan.kelola']), 403);
-        $sale->load(['items.product', 'customer', 'user', 'receivable']);
+        $sale->load(['items.product', 'customer', 'user', 'receivable', 'piutang']);
         $store = $storeSettingsService->forDocument();
         $isCancelled = $sale->status === Sale::STATUS_CANCELLED;
         $paperHeightMm = max(120, 96 + ($sale->items->count() * 15));

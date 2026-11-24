@@ -51,6 +51,7 @@ class AppLayoutTest extends TestCase
             ->assertOk()
             ->assertSee('Dashboard')
             ->assertSee('Laporan')
+            ->assertSee('Piutang')
             ->assertDontSee('Master Data')
             ->assertDontSee(route('sales.index'))
             ->assertDontSee(route('purchases.index'))

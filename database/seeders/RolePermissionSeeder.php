@@ -33,6 +33,8 @@ class RolePermissionSeeder extends Seeder
             'pembelian.kelola',
             'penjualan.lihat',
             'penjualan.kelola',
+            'piutang.lihat',
+            'piutang.kelola',
             'laporan.lihat',
             'user.kelola',
             'pengaturan.kelola',
@@ -66,10 +68,12 @@ class RolePermissionSeeder extends Seeder
                 'pelanggan.buat',
                 'penjualan.lihat',
                 'penjualan.kelola',
+                'piutang.kelola',
             ],
             'owner' => [
                 'dashboard.lihat',
                 'laporan.lihat',
+                'piutang.lihat',
             ],
         ];
 

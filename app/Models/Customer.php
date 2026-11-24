@@ -52,4 +52,9 @@ class Customer extends Model
     {
         return $this->hasMany(Receivable::class);
     }
+
+    public function piutangs(): HasMany
+    {
+        return $this->hasMany(Piutang::class);
+    }
 }

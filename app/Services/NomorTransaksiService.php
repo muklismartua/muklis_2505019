@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Purchase;
+use App\Models\PiutangPayment;
 use App\Models\Sale;
 use App\Models\StockManual;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,11 @@ class NomorTransaksiService
     public function nomorStokManual(): string
     {
         return $this->nomorHarian(StockManual::class, 'SM');
+    }
+
+    public function nomorPembayaranPiutang(): string
+    {
+        return $this->nomorHarian(PiutangPayment::class, 'BYR');
     }
 
     /**
