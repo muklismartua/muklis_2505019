@@ -33,6 +33,7 @@ export default (
         quickCustomerMessage: '',
         duplicateCustomer: null,
         quickCustomerSubmitting: false,
+        sedangMenyimpan: false,
         customerSelectionError: '',
         items: (Array.isArray(initialItems) ? initialItems : []).map((item, index) => {
             const product = availableProducts.find((candidate) => candidate.id === Number(item.product_id));
@@ -224,8 +225,17 @@ export default (
                 && this.totalHutangSebelumnya + this.sisaHutangBaru > limit;
         },
 
+        mulaiSimpan(event) {
+            if (this.tidakBolehSimpan) {
+                event.preventDefault();
+                return;
+            }
+
+            this.sedangMenyimpan = true;
+        },
+
         get tidakBolehSimpan() {
-            if (this.items.length === 0) {
+            if (this.sedangMenyimpan || this.items.length === 0) {
                 return true;
             }
 

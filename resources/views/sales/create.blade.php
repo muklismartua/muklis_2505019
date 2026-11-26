@@ -48,6 +48,12 @@
         </div>
     @endif
 
+    @if (session('error'))
+        <div class="mb-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            {{ session('error') }}
+        </div>
+    @endif
+
     @if ($products->isEmpty())
         <div class="mb-5 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Belum ada produk aktif. Tambahkan produk sebelum membuat penjualan.
@@ -55,6 +61,7 @@
     @endif
 
     <form
+        @submit="mulaiSimpan($event)"
         method="POST"
         action="{{ route('sales.store') }}"
         x-data="saleForm(@js($saleProducts), @js(old('items', [])), @js($initialValues), @js($customerSearchUrl), @js($quickCustomerUrl), @js($initialCustomer), @js(csrf_token()))"
@@ -259,6 +266,9 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100">
+                        <tr x-show="items.length === 0">
+                            <td colspan="6" class="px-5 py-4 text-center text-sm text-amber-700">Keranjang masih kosong.</td>
+                        </tr>
                         <template x-for="(item, index) in items" :key="item.key">
                             <tr>
                                 <td class="px-5 py-3">
@@ -328,8 +338,13 @@
                             <th></th>
                         </tr>
                         <tr>
-                            <th colspan="4" class="px-5 py-3 text-right">Kembalian</th>
+                            <th colspan="4" class="px-5 py-3 text-right">Total</th>
                             <th class="whitespace-nowrap px-5 py-3 text-right text-base font-bold" x-text="formatRupiah(total)"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th colspan="4" class="px-5 py-3 text-right">Bayar</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(Math.max(Number(bayar || 0), 0))"></th>
                             <th></th>
                         </tr>
                         <tr>
@@ -344,7 +359,9 @@
 
         <div class="flex justify-end gap-3">
             <a href="{{ route('sales.index') }}" class="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-white">Batal</a>
-            <x-ui.button type="submit" :disabled="$products->isEmpty()" ::disabled="tidakBolehSimpan">Simpan penjualan</x-ui.button>
+            <x-ui.button type="submit" :disabled="$products->isEmpty()" ::disabled="tidakBolehSimpan">
+                <span x-text="sedangMenyimpan ? 'Menyimpan...' : 'Simpan penjualan'"></span>
+            </x-ui.button>
         </div>
 
         <div
