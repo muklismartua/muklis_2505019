@@ -189,8 +189,9 @@ export default (
 
         get pajak() {
             const taxableAmount = Math.max(this.subtotal - Math.max(Number(this.diskon || 0), 0), 0);
+            const taxRate = Math.max(Number(this.pajakPersen || 0), 0);
 
-            return Math.round((taxableAmount * Math.max(Number(this.pajakPersen || 0), 0)) / 100);
+            return this.bulatRupiah((taxableAmount * taxRate) / 100);
         },
 
         get total() {
@@ -252,6 +253,10 @@ export default (
             }
 
             return Math.max(qty * harga - Math.max(diskonItem, 0), 0);
+        },
+
+        bulatRupiah(value) {
+            return Math.round(Number.isFinite(value) ? value : 0);
         },
 
         formatRupiah(value) {

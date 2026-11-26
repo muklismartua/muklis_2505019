@@ -174,6 +174,30 @@ class SaleManagementTest extends TestCase
         ]);
     }
 
+    public function test_percentage_tax_rounds_to_nearest_rupiah_on_server(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 90000, 'stok' => 10]);
+
+        $response = $this->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'metode_pembayaran' => 'tunai',
+            'diskon' => 0,
+            'pajak_persen' => 3,
+            'pajak' => 2695,
+            'bayar' => 92700,
+            'items' => [[
+                'product_id' => $product->id,
+                'qty' => 1,
+                'diskon' => 0,
+            ]],
+        ]);
+
+        $sale = Sale::query()->firstOrFail();
+        $response->assertRedirect(route('sales.show', $sale));
+        $this->assertSame(2700, $sale->pajak);
+        $this->assertSame(92700, $sale->total);
+    }
+
     public function test_percentage_tax_is_calculated_on_the_discounted_subtotal_on_the_server(): void
     {
         $product = Product::factory()->create(['harga_jual' => 10000, 'stok' => 2]);

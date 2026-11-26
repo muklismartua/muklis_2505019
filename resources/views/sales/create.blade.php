@@ -308,12 +308,27 @@
                             <th></th>
                         </tr>
                         <tr>
+                            <th colspan="4" class="px-5 py-3 text-right">Diskon transaksi</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(Math.max(Number(diskon || 0), 0))"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
                             <th colspan="4" class="px-5 py-3 text-right">Pajak (<span x-text="pajakPersen"></span>%)</th>
                             <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(pajak)"></th>
                             <th></th>
                         </tr>
                         <tr>
-                            <th colspan="4" class="px-5 py-3 text-right">Total setelah diskon dan pajak</th>
+                            <th colspan="4" class="px-5 py-3 text-right">Total</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(total)"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th colspan="4" class="px-5 py-3 text-right">Bayar</th>
+                            <th class="whitespace-nowrap px-5 py-3 text-right" x-text="formatRupiah(Math.max(Number(bayar || 0), 0))"></th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th colspan="4" class="px-5 py-3 text-right">Kembalian</th>
                             <th class="whitespace-nowrap px-5 py-3 text-right text-base font-bold" x-text="formatRupiah(total)"></th>
                             <th></th>
                         </tr>
