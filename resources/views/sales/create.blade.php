@@ -191,22 +191,35 @@
 
         <section class="overflow-visible rounded-lg border border-slate-200 bg-white">
             <div class="border-b border-slate-200 px-5 py-4">
-                <h2 class="font-semibold">Cari produk</h2>
-                <div class="relative mt-3">
+                <h2 class="font-semibold">Tambah produk ke keranjang</h2>
+                <div class="relative mt-3" @click.outside="productPickerOpen = false">
                     <label class="sr-only" for="cari-produk">Cari produk berdasarkan nama atau SKU</label>
                     <input
                         id="cari-produk"
                         type="search"
                         x-model="query"
+                        @focus="productPickerOpen = true"
+                        @keydown.escape="productPickerOpen = false"
                         autocomplete="off"
                         placeholder="Ketik nama produk atau SKU"
                         class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"
                     >
+                    <button
+                        type="button"
+                        @click="productPickerOpen = !productPickerOpen"
+                        class="mt-2 text-sm font-semibold text-indigo-700 hover:underline"
+                        :aria-expanded="productPickerOpen.toString()"
+                    >
+                        <span x-text="productPickerOpen ? 'Tutup daftar produk' : 'Pilih produk untuk ditambahkan'"></span>
+                    </button>
                     <div
                         x-cloak
-                        x-show="hasilPencarian.length > 0"
-                        class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg"
+                        x-show="productPickerOpen"
+                        class="mt-2 max-h-64 w-full overflow-y-auto rounded-md border border-slate-200 bg-white shadow-sm"
                     >
+                        <p x-show="!query.trim() && hasilPencarian.length > 0" class="border-b border-slate-100 px-4 py-2 text-xs text-slate-500">
+                            Pilih produk di bawah, atau ketik nama/SKU untuk mencari.
+                        </p>
                         <template x-for="product in hasilPencarian" :key="product.id">
                             <button
                                 type="button"
@@ -218,12 +231,18 @@
                                     <span class="block font-medium" x-text="product.nama"></span>
                                     <span class="text-xs text-slate-500" x-text="`${product.sku} · stok ${product.stok}`"></span>
                                 </span>
-                                <span class="whitespace-nowrap text-slate-700" x-text="formatRupiah(product.harga_jual)"></span>
+                                <span class="flex shrink-0 items-center gap-3">
+                                    <span class="whitespace-nowrap text-slate-700" x-text="formatRupiah(product.harga_jual)"></span>
+                                    <span class="rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white" x-text="product.stok > 0 ? 'Tambah' : 'Stok habis'"></span>
+                                </span>
                             </button>
                         </template>
+                        <p x-show="hasilPencarian.length === 0" class="px-4 py-3 text-sm text-slate-500">
+                            <span x-show="query.trim()">Produk tidak ditemukan.</span>
+                            <span x-show="!query.trim()">Belum ada produk aktif yang bisa dijual.</span>
+                        </p>
                     </div>
                 </div>
-                <p x-cloak x-show="query.trim() && hasilPencarian.length === 0" class="mt-2 text-sm text-slate-500">Produk tidak ditemukan.</p>
                 <p x-cloak x-show="error" x-text="error" class="mt-2 text-sm text-red-700" role="alert"></p>
             </div>
 
@@ -351,21 +370,21 @@
                 <div @keydown.enter.prevent class="space-y-4">
                     <div>
                         <label for="quick-customer-name" class="mb-1 block text-sm font-medium text-slate-700">Nama <span class="text-red-600">*</span></label>
-                        <input id="quick-customer-name" x-model="quickCustomer.nama" type="text" maxlength="255" required class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input id="quick-customer-name" x-model="quickCustomer.nama" type="text" maxlength="255" required :disabled="!customerModalOpen" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <template x-for="message in (quickCustomerErrors.nama || [])" :key="message">
                             <p x-text="message" class="mt-1 text-sm text-red-700"></p>
                         </template>
                     </div>
                     <div>
                         <label for="quick-customer-phone" class="mb-1 block text-sm font-medium text-slate-700">Telepon</label>
-                        <input id="quick-customer-phone" x-model="quickCustomer.telepon" type="tel" maxlength="50" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
+                        <input id="quick-customer-phone" x-model="quickCustomer.telepon" type="tel" maxlength="50" :disabled="!customerModalOpen" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500">
                         <template x-for="message in (quickCustomerErrors.telepon || [])" :key="message">
                             <p x-text="message" class="mt-1 text-sm text-red-700"></p>
                         </template>
                     </div>
                     <div>
                         <label for="quick-customer-address" class="mb-1 block text-sm font-medium text-slate-700">Alamat</label>
-                        <textarea id="quick-customer-address" x-model="quickCustomer.alamat" rows="2" maxlength="2000" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                        <textarea id="quick-customer-address" x-model="quickCustomer.alamat" rows="2" maxlength="2000" :disabled="!customerModalOpen" class="w-full rounded-md border-slate-300 text-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
                         <template x-for="message in (quickCustomerErrors.alamat || [])" :key="message">
                             <p x-text="message" class="mt-1 text-sm text-red-700"></p>
                         </template>

@@ -31,8 +31,13 @@
                 <td class="whitespace-nowrap px-5 py-4 font-medium">{{ $manual->nomor }}</td>
                 <td class="whitespace-nowrap px-5 py-4">{{ $manual->tanggal->format('d/m/Y') }}</td>
                 <td class="whitespace-nowrap px-5 py-4">
-                    <a href="{{ route('stock.show', $manual->product) }}" class="font-medium text-indigo-700 hover:underline">{{ $manual->product->nama }}</a>
-                    <p class="mt-1 text-xs text-slate-500">{{ $manual->product->sku }}</p>
+                    @if ($manual->product && ! $manual->product->trashed())
+                        <a href="{{ route('stock.show', $manual->product) }}" class="font-medium text-indigo-700 hover:underline">{{ $manual->product->nama }}</a>
+                    @else
+                        <span class="font-medium text-slate-700">{{ $manual->product?->nama ?? 'Produk dihapus' }}</span>
+                        <span class="text-xs text-slate-500">(dihapus)</span>
+                    @endif
+                    <p class="mt-1 text-xs text-slate-500">{{ $manual->product?->sku ?? '—' }}</p>
                 </td>
                 <td class="whitespace-nowrap px-5 py-4">
                     <x-ui.badge :status="$manual->tipe === 'tambah' ? 'active' : 'inactive'">{{ ucfirst($manual->tipe) }}</x-ui.badge>

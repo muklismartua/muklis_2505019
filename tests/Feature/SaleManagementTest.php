@@ -44,7 +44,8 @@ class SaleManagementTest extends TestCase
 
         $this->get(route('sales.create'))
             ->assertOk()
-            ->assertSee('Cari produk')
+            ->assertSee('Tambah produk ke keranjang')
+            ->assertSee('Pilih produk untuk ditambahkan')
             ->assertSee('saleForm(');
         $this->post(route('sales.store'), [
             'customer_id' => $customer->id,

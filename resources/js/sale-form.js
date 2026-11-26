@@ -54,6 +54,7 @@ export default (
         }),
         nextKey: Array.isArray(initialItems) ? initialItems.length : 0,
         query: '',
+        productPickerOpen: false,
         error: '',
         diskon: Number(initialValues.diskon ?? 0),
         pajakPersen: Number(initialValues.pajak_persen ?? 0),
@@ -65,7 +66,7 @@ export default (
             const term = this.query.trim().toLocaleLowerCase('id-ID');
 
             if (!term) {
-                return [];
+                return this.products.slice(0, 10);
             }
 
             return this.products
@@ -285,6 +286,7 @@ export default (
             }
 
             this.query = '';
+            this.productPickerOpen = false;
             this.error = '';
         },
 

@@ -112,6 +112,25 @@ class StockManualManagementTest extends TestCase
             ->assertSee('Tambah/Kurang Stok');
     }
 
+    public function test_history_renders_when_product_was_soft_deleted(): void
+    {
+        $product = Product::factory()->create(['nama' => 'Produk diarsipkan', 'stok' => 5]);
+
+        $this->post(route('stock-manuals.store'), [
+            'tipe' => 'tambah',
+            'tanggal' => now()->toDateString(),
+            'alasan' => 'koreksi',
+            'items' => [['product_id' => $product->id, 'qty' => 1]],
+        ])->assertRedirect(route('stock-manuals.index'));
+
+        $product->delete();
+
+        $this->get(route('stock-manuals.index'))
+            ->assertOk()
+            ->assertSee('Produk diarsipkan')
+            ->assertSee('(dihapus)');
+    }
+
     public function test_manual_subtraction_cannot_exceed_available_stock(): void
     {
         $product = Product::factory()->create(['nama' => 'Barang Terbatas', 'stok' => 2]);
