@@ -26,6 +26,62 @@ class SaleManagementTest extends TestCase
         $this->actingAs($this->admin);
     }
 
+    public function test_cash_sale_single_item_saves_reduces_stock_and_uses_server_total(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 90000, 'stok' => 4]);
+
+        $this->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'diskon' => 0,
+            'pajak_persen' => 3,
+            'pajak' => 2695,
+            'bayar' => 92700,
+            'metode_pembayaran' => 'tunai',
+            'items' => [['product_id' => $product->id, 'qty' => 1, 'diskon' => 0]],
+        ])->assertRedirect()->assertSessionHas('success');
+
+        $sale = Sale::query()->firstOrFail();
+        $this->assertSame(92700, $sale->total);
+        $this->assertSame(2700, $sale->pajak);
+        $this->assertSame(3, $product->fresh()->stok);
+    }
+
+    public function test_cash_sale_rejects_payment_below_server_total(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 90000, 'stok' => 4]);
+
+        $this->from(route('sales.create'))->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'pajak_persen' => 3,
+            'bayar' => 92699,
+            'metode_pembayaran' => 'tunai',
+            'items' => [['product_id' => $product->id, 'qty' => 1, 'diskon' => 0]],
+        ])->assertRedirect(route('sales.create'))->assertSessionHasErrors('bayar');
+    }
+
+    public function test_empty_cart_is_rejected(): void
+    {
+        $this->from(route('sales.create'))->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'bayar' => 0,
+            'metode_pembayaran' => 'tunai',
+            'items' => [],
+        ])->assertRedirect(route('sales.create'))->assertSessionHasErrors('items');
+    }
+
+    public function test_tempo_sale_without_customer_is_rejected(): void
+    {
+        $product = Product::factory()->create(['harga_jual' => 90000, 'stok' => 4]);
+
+        $this->from(route('sales.create'))->post(route('sales.store'), [
+            'tanggal' => now()->toDateString(),
+            'bayar' => 0,
+            'metode_pembayaran' => 'tempo',
+            'jatuh_tempo' => now()->addDays(14)->toDateString(),
+            'items' => [['product_id' => $product->id, 'qty' => 1, 'diskon' => 0]],
+        ])->assertRedirect(route('sales.create'))->assertSessionHasErrors('customer_id');
+    }
+
     public function test_sale_saves_multiple_items_deducts_stock_and_calculates_totals(): void
     {
         $customer = Customer::factory()->create();
