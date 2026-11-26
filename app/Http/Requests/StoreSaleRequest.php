@@ -12,6 +12,42 @@ class StoreSaleRequest extends FormRequest
         return $this->user()?->can('penjualan.kelola') ?? false;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $numericFields = ['diskon', 'pajak', 'bayar'];
+        $cleaned = [];
+
+        foreach ($numericFields as $field) {
+            if ($this->has($field)) {
+                $cleaned[$field] = $this->bersihkanNominal($this->input($field));
+            }
+        }
+
+        $items = collect($this->input('items', []))->map(function ($item) {
+            if (array_key_exists('diskon', $item)) {
+                $item['diskon'] = $this->bersihkanNominal($item['diskon']);
+            }
+
+            return $item;
+        })->all();
+
+        $this->merge(array_merge($cleaned, [
+            'metode_pembayaran' => $this->input('metode_pembayaran') === 'hutang'
+                ? 'tempo'
+                : $this->input('metode_pembayaran'),
+            'items' => $items,
+        ]));
+    }
+
+    private function bersihkanNominal(mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        return preg_replace('/[^0-9-]/', '', $value);
+    }
+
     public function rules(): array
     {
         return [
@@ -27,12 +63,21 @@ class StoreSaleRequest extends FormRequest
             'pajak' => ['nullable', 'integer', 'min:0'],
             'pajak_persen' => ['nullable', 'numeric', 'between:0,100'],
             'bayar' => ['required', 'integer', 'min:0'],
-            'metode_pembayaran' => ['required', Rule::in(['tunai', 'transfer', 'tempo'])],
+            'metode_pembayaran' => ['required', Rule::in(['tunai', 'transfer', 'tempo', 'hutang'])],
             'catatan' => ['nullable', 'string', 'max:2000'],
             'items' => ['required', 'array', 'min:1', 'max:50'],
             'items.*.product_id' => ['required', 'integer', 'distinct', 'exists:products,id'],
             'items.*.qty' => ['required', 'integer', 'min:1', 'max:1000000'],
-            'items.*.diskon' => ['nullable', 'integer', 'min:0'],
+            'items.*.diskon' => ['nullable', 'integer', 'min:0', function ($attribute, $value, $fail): void {
+                $index = (int) str($attribute)->between('items.', '.diskon')->toString();
+                $item = $this->input("items.{$index}", []);
+                $product = \App\Models\Product::query()->find($item['product_id'] ?? null);
+                $subtotal = $product ? $product->harga_jual * (int) ($item['qty'] ?? 0) : 0;
+
+                if ((int) $value > $subtotal) {
+                    $fail('Diskon item tidak boleh melebihi subtotal baris.');
+                }
+            }],
         ];
     }
 
